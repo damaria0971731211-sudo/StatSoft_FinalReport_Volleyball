@@ -122,6 +122,7 @@
         <h3>R：實力評分模型</h3>
         <p>以每局勝負與分差估計球員實力（Bradley-Terry／邏輯斯迴歸類型），加入收縮避免比賽少的球員估計過度極端；可延伸估計搭檔默契。</p>
         <p class="note">輸入：每局名單與比分 CSV　輸出：球員實力估計與區間</p>
+        <p><a href="r-rating-model/report.html">完整 R 分析報告</a>　<a href="r-rating-model/README.md">程式說明</a></p>
       </div>
       <div class="card">
         <h3>Python：報名與分隊</h3>
@@ -172,8 +173,8 @@
         <figcaption>圖 2　不同分隊方法的局分差分布</figcaption>
       </figure>
       <figure class="card">
-        <div class="placeholder">待補：比賽場數與實力估計準確度／涵蓋率</div>
-        <figcaption>圖 3　實力估計隨比賽場數的變化</figcaption>
+        <img src="r-rating-model/figures/sim-nights-1.png" alt="折線圖：用來估計的晚數從 4 增加到 32 晚時，各模型估計實力與真實實力的 Spearman 相關，以及預測未來比賽的 log loss" style="width:100%;height:auto">
+        <figcaption>圖 3　實力估計隨比賽晚數的變化（模擬研究，詳見 <a href="r-rating-model/report.html">R 報告</a>）</figcaption>
       </figure>
     </div>
     <h3>比較摘要<span class="todo">待補數字</span></h3>

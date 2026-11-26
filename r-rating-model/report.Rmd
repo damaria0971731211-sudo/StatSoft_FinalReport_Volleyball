@@ -1,0 +1,302 @@
+---
+title: "野場排球球員實力評分模型（R）"
+subtitle: "StatSoft 期末專題：R 實質任務"
+date: "`r format(Sys.Date(), '%Y-%m-%d')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    self_contained: true
+    fig_caption: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
+                      fig.width = 7.5, fig.height = 4.2, dpi = 150,
+                      fig.path = "figures/")
+library(ggplot2)
+FONT <- "WenQuanYi Zen Hei"
+theme_set(theme_minimal(base_size = 12, base_family = FONT) +
+            theme(panel.grid.minor = element_blank(), plot.title.position = "plot"))
+pal <- c("#2B6CB0", "#D69E2E", "#38A169", "#C53030", "#6B46C1")
+bl <- readRDS("results/bundesliga.rds")
+ss <- readRDS("results/simulation_study.rds")
+vs <- readRDS("results/volley_sim.rds")
+f2 <- function(x, d = 2) formatC(x, format = "f", digits = d)
+pct <- function(x, d = 0) paste0(formatC(100 * x, format = "f", digits = d), "%")
+sim <- ss$results
+```
+
+# 這一份在做什麼
+
+研究問題：**用比賽結果估出的球員實力來分隊，是否比隨機分隊或依自報程度分隊更勢均力敵？**
+要回答它，第一步是有一個能從「每局名單＋比分」估出每位球員實力、並附上不確定區間的模型。
+這份文件就是那個模型，以及三層驗證：
+
+1. **真實公開比分**（德國排球甲級聯賽 `r format(bl$n_sets, big.mark = ",")` 局）：模型能不能預測下半季？
+2. **自己的模擬資料**（真實實力已知）：估不估得回來？95% 區間是否真的涵蓋 95%？需要幾晚資料？
+3. **Python 模擬器的野場資料**（產生機制跟模型不同）：模型設定不完全正確時還好不好用？
+
+> 所有野場資料都是模擬的，沒有真實人物。真實野場紀錄不在本專題範圍內。
+
+# 資料格式
+
+模型只需要每局一列：
+
+| 欄位 | 說明 | 例 |
+|---|---|---|
+| `date`, `session` | 日期、時段（晚餐場／消夜場） | 2026-09-14, 晚餐場 |
+| `game_id` | 局編號 | 17 |
+| `team_a`, `team_b` | 兩隊名單，以 `;` 分隔球員代號 | `P03;P11;P27;P30;P38` |
+| `score_a`, `score_b` | 該局比分 | 25, 21 |
+
+選用：球員表 `player, level`（自報程度 1–5）。Python 模擬器輸出的長格式（`game_players.csv`）由 `R/read_volley_sim.R` 自動轉換。
+
+# 模型
+
+## 逐球的 Bradley–Terry 模型
+
+把一局看成很多個「球」（rally）。設 A 隊每一球得分的機率為 $p$，
+
+$$
+\operatorname{logit}(p) = \underbrace{\bar\theta_A - \bar\theta_B}_{\text{個人實力平均之差}}
+ + \underbrace{\bar\gamma_A - \bar\gamma_B}_{\text{隊內搭檔默契平均之差}}
+ + \underbrace{\delta\,(n_A - n_B)}_{\text{人數差}}
+$$
+
+- $\theta_i$：球員 $i$ 的實力（logit 尺度；差 0.1 約等於每球得分機率差 2.5 個百分點）。
+- $\gamma_{jk}$：$j,k$ 兩人同隊時的額外默契（扣掉兩人各自實力後的**交互作用**）。
+- $\delta$：多一個人的優勢（野場常有 4 打 5）。
+
+**為什麼可以直接把比分當二項資料？** 若每球獨立、得分機率都是 $p$，一局「先到 25 分且領先 2 分」的停止規則只看比分、不看 $p$，所以任一比分序列的機率是「常數 $\times\, p^{a}(1-p)^{b}$」。對 $p$ 而言，似然函數跟二項分佈完全一樣（似然原則），不需要逐球紀錄。這個「每球獨立」假設在第 4.3 節用真實比分檢查。
+
+## 先驗與收縮（階層模型）
+
+$$
+\theta_i \sim N\!\big(\beta\,(\text{自報程度}_i - 3),\ \sigma^2\big),\qquad
+\gamma_{jk} \sim N(0,\ \tau^2),\qquad \beta \sim N(0, 10^2),\ \delta \sim N(0,1)
+$$
+
+- **自報程度當先驗平均**：打得少的人，估計值會被拉向「同程度的人的平均」；打得多的人，主要由比賽結果決定。$\beta$ 由資料估計，所以自報準不準也是資料說了算。
+- **搭檔效果收縮到 0**：兩人同隊的局數通常很少，若不收縮，「默契」幾乎都是雜訊。$\tau$ 由資料估計；資料不足以支持默契時，$\hat\tau \to 0$，模型自動退回只有個人實力。
+
+## 估計方法
+
+1. 給定 $(\sigma, \tau)$，用 Newton 法（IRLS）求後驗眾數（MAP）。
+2. 用 Laplace 近似算邊際概似 $\log p(\text{資料}\mid\sigma,\tau)$，最大化它得到 $\hat\sigma, \hat\tau$（經驗貝氏）。
+3. 95% 區間 = MAP $\pm 1.96\times$ 後驗標準差（Hessian 反矩陣的對角線）。實力以「相對全體平均」呈現。
+
+全部只用 base R 與 `Matrix`（稀疏矩陣），程式碼在 `R/rating_model.R`，可以逐行讀懂，不依賴黑盒套件。
+
+# 驗證一：真實公開比分（德國排球甲級聯賽）
+
+## 資料
+
+R 套件 **volleystat**（Bozhinov, CC0 授權）收錄 2013/14–2018/19 德甲男女聯賽每一局的比分，原始資料來自聯賽官網。共 `r format(bl$n_sets, big.mark = ",")` 局、12 個「聯賽 × 球季」。
+這裡把**每支隊伍當成一位「球員」**（名單只有自己），套用同一個模型。每個球季用**上半季**估計，**預測下半季每一局誰贏**（`r format(nrow(bl$pred)/2, big.mark=",")` 局）。
+
+## 預測結果
+
+```{r bl-table}
+tab <- bl$summary
+tab$method <- c(eb = "模型（經驗貝氏收縮）", flat = "模型（幾乎不收縮，≈ 最大概似）", coin = "擲硬幣基準")[tab$method]
+names(tab) <- c("方法", "測試局數", "Log loss（越低越好）", "Brier", "命中率")
+tab[, 3:5] <- lapply(tab[, 3:5], f2, d = 3)
+knitr::kable(tab, row.names = FALSE, align = "lrrrr")
+```
+
+模型猜中下半季 **`r pct(bl$summary$accuracy[bl$summary$method=="eb"])`** 的局，log loss 從擲硬幣的 0.693 降到 `r f2(bl$summary$log_loss[bl$summary$method=="eb"],3)`。在職業聯賽裡每隊上半季就打了 30 局以上，所以收縮與否差異很小；收縮的價值在資料少的時候才出現（見第 5 節）。
+
+```{r bl-calib, fig.height=3.8, fig.cap="校準圖：把預測勝率分成 10 組，比較預測與實際勝率。點越貼近對角線，代表機率越可信。"}
+e <- bl$pred[bl$pred$method == "eb", ]
+e$bin <- cut(e$p_set, quantile(e$p_set, 0:10/10), include.lowest = TRUE)
+cb <- aggregate(cbind(p_set, win_a) ~ bin, e, mean)
+cb$n <- as.numeric(table(e$bin))
+cb$se <- sqrt(cb$win_a * (1 - cb$win_a) / cb$n)
+ggplot(cb, aes(p_set, win_a)) +
+  geom_abline(linetype = 2, colour = "grey60") +
+  geom_errorbar(aes(ymin = win_a - 1.96 * se, ymax = win_a + 1.96 * se), width = 0, colour = pal[1]) +
+  geom_point(size = 2.5, colour = pal[1]) +
+  coord_equal(xlim = c(0, 1), ylim = c(0, 1)) +
+  labs(x = "模型預測的主隊贏局機率", y = "實際贏局比例")
+```
+
+## 「每球獨立」假設檢查
+
+若每球真的獨立，可以從每局的預測得分機率算出「打到 24:24 進入 deuce」的期望次數：
+期望 **`r f2(bl$deuce$expected, 0)`** 局，實際 **`r bl$deuce$observed`** 局（比例 `r f2(bl$deuce$observed / bl$deuce$expected)`）。
+實際的膠著局多了約 `r pct(bl$deuce$observed / bl$deuce$expected - 1)`，表示比賽有一點「落後時更拚、領先時放鬆」的動態，每球並不完全獨立。這會讓模型對**比分差**的不確定性稍微低估，但不影響「誰比較強」的排序；報告中列為限制。
+
+## 從真實資料借的參數
+
+```{r bl-sigma}
+sg <- bl$sigma
+```
+
+職業聯賽各隊實力的離散程度 $\hat\sigma_{\text{隊}}$ 在 `r f2(min(sg$sigma))`–`r f2(max(sg$sigma))` 之間（logit／每球），每局（非決勝局）平均分差 `r f2(mean(bl$margin),1)` 分。
+野場是隨機湊隊、程度落差更大，所以模擬時設個人實力 $\sigma = 0.5$：5 人隊伍平均後隊伍實力的標準差約 0.22，兩隊差距約 0.32，比職業聯賽大一些，模擬出來每局平均分差約 `r f2(mean(sim$mean_margin[sim$scenario=="base"]),1)` 分。這是**假設**，第 5.4 節用 $\sigma = 0.3$ 做敏感度分析。
+
+# 驗證二：模擬研究（真實實力已知）
+
+## 設計
+
+- 球員池 40 人，真實實力 $\theta_i \sim N(0, 0.5^2)$；搭檔默契 $\gamma_{jk} \sim N(0, 0.3^2)$（雙重中心化成純交互作用）。
+- 自報程度 = 真實實力加雜訊後切成 1–5 級，與真實實力的相關約 0.7。
+- 每晚 4–6 隊、每隊 4–6 人、隨機分隊，打 12 局；逐球模擬，每局打到 20 分（30% 是 15 分短局，皆須贏 2 分），對應政大野場晚餐場、消夜場的規則。
+- 分別用 **4、8、16、32 晚** 的資料估計，另外再模擬 4 晚當「未來」測試資料。每個情境重複 `r ss$R_REPS` 次。
+
+比較的方法：
+
+| 代號 | 方法 |
+|---|---|
+| B1 | 只看自報程度 |
+| B2 | 原始得分率（該員所在隊伍的得分 ÷ 總分） |
+| M1 | 個人 Bradley–Terry，無自報先驗、無搭檔 |
+| M2 | M1 + 自報程度先驗 |
+| M3 | M2 + 搭檔默契（完整模型） |
+
+## 需要幾晚的資料？
+
+```{r sim-nights, fig.height=4.6, fig.cap="左：估計實力與真實實力的 Spearman 相關（排序準不準）。右：預測未來 4 晚每局勝負的 log loss（越低越好）。誤差棒為重複間的 95% 信賴區間。"}
+b <- sim[sim$scenario == "base", ]
+agg <- function(v, data) {
+  a <- aggregate(data[[v]], list(method = data$method, n_nights = data$n_nights),
+                 function(x) c(m = mean(x, na.rm = TRUE), se = sd(x, na.rm = TRUE) / sqrt(sum(!is.na(x)))))
+  data.frame(method = a$method, n_nights = a$n_nights, m = a$x[, "m"], se = a$x[, "se"], metric = v)
+}
+d1 <- rbind(agg("spearman", b), agg("test_logloss", b))
+d1 <- d1[is.finite(d1$m), ]
+d1$metric <- factor(d1$metric, c("spearman", "test_logloss"), c("與真實實力的 Spearman 相關", "未來比賽預測 log loss"))
+ggplot(d1, aes(n_nights, m, colour = method)) +
+  geom_line() + geom_point() +
+  geom_errorbar(aes(ymin = m - 1.96 * se, ymax = m + 1.96 * se), width = 0.6) +
+  facet_wrap(~metric, scales = "free_y") +
+  scale_x_continuous(breaks = c(4, 8, 16, 32)) +
+  scale_colour_manual(values = pal, name = NULL) +
+  labs(x = "用來估計的晚數", y = NULL) + theme(legend.position = "bottom")
+```
+
+```{r sim-table}
+m <- aggregate(cbind(spearman, rmse, coverage, width, test_logloss) ~ n_nights + method,
+               data = b, FUN = mean, na.action = na.pass)
+m <- m[order(m$n_nights, m$method), ]
+m$sets <- tapply(b$sets, b$n_nights, mean)[as.character(m$n_nights)]
+out <- data.frame(晚數 = m$n_nights, 約局數 = round(m$sets), 方法 = m$method,
+                  Spearman = f2(m$spearman), RMSE = ifelse(is.na(m$rmse), "", f2(m$rmse)),
+                  `95%區間涵蓋率` = ifelse(is.na(m$coverage), "", pct(m$coverage, 1)),
+                  區間平均寬度 = ifelse(is.na(m$width), "", f2(m$width)),
+                  `預測 log loss` = ifelse(is.na(m$test_logloss), "", f2(m$test_logloss, 3)),
+                  check.names = FALSE)
+knitr::kable(out, row.names = FALSE, align = "rrlrrrrr")
+```
+
+```{r sim-key, include=FALSE}
+g <- function(nn, me, v) mean(b[b$n_nights == nn & b$method == me, v], na.rm = TRUE)
+```
+
+重點：
+
+- **自報先驗在資料少時最有用。** 只有 4 晚時，M2 的排序相關 `r f2(g(4,"M2_個人加自報先驗","spearman"))`，高於只看比賽的 M1（`r f2(g(4,"M1_個人","spearman"))`）和只看自報的 B1（`r f2(g(4,"B1_自報程度","spearman"))`）。兩種資訊合起來勝過任何一種。
+- **比原始得分率好。** 得分率會被隊友拖累或帶飛；模型同時考慮所有隊友與對手，16 晚時相關 `r f2(g(16,"M2_個人加自報先驗","spearman"))` vs 得分率 `r f2(g(16,"B2_原始得分率","spearman"))`。
+- **區間大致可信，但略窄。** M2 的 95% 區間實際涵蓋率約 `r pct(min(b$coverage[b$method=='M2_個人加自報先驗'] |> tapply(b$n_nights[b$method=='M2_個人加自報先驗'], mean)))`–`r pct(max(b$coverage[b$method=='M2_個人加自報先驗'] |> tapply(b$n_nights[b$method=='M2_個人加自報先驗'], mean)))`，略低於名目的 95%。原因是經驗貝氏把估出來的 $\hat\sigma$ 當成已知，忽略了它本身的不確定性；報告時可以說「區間略為樂觀」，或改用 97.5% 區間當保守版本。
+- 約 **16 晚（約 190 局）** 後，排序相關達 `r f2(g(16,'M2_個人加自報先驗','spearman'))`；32 晚約 `r f2(g(32,'M2_個人加自報先驗','spearman'))`。15／20 分的短局每局資訊比 25 分局少，所以需要的晚數比想像多。
+
+## 搭檔默契估得出來嗎？
+
+```{r pairs}
+pp <- aggregate(cbind(pair_cor, pair_cov, tau_hat) ~ n_nights, data = b[b$method == "M3_完整含搭檔", ],
+                FUN = mean, na.action = na.pass)
+names(pp) <- c("晚數", "估計值與真實默契的相關", "95% 區間涵蓋率", "估計的 τ（真值 0.3）")
+pp[, 2] <- f2(pp[, 2]); pp[, 3] <- pct(pp[, 3], 1); pp[, 4] <- f2(pp[, 4])
+knitr::kable(pp, row.names = FALSE, align = "rrrr")
+```
+
+**幾乎估不出來。**即使 32 晚，估計的默契與真實默契的相關仍很低。原因是 40 人有 780 種兩兩組合，每對同隊的局數很少；而且默契藏在 4–6 人平均裡，訊號被稀釋。
+收縮估計讓大部分默契被拉回 0，所以加入搭檔項（M3）的排序相關與預測跟 M2 幾乎一樣；但**資料少時 M3 會讓個人實力的區間變得太窄**（4 晚時涵蓋率只有 `r pct(g(4,'M3_完整含搭檔','coverage'))`），因為一部分個人差異被誤歸給默契。**所以分隊時建議用 M2 的實力估計**，M3 只用來探索默契。
+**對報告的意義**：「跟誰很合」可以做成探索性指標（例如同隊局數 ≥ 5 才顯示），但要附上區間並註明證據薄弱，不能當成分隊依據。
+
+## 敏感度分析（16 晚）
+
+```{r sens}
+s16 <- sim[sim$n_nights == 16, ]
+sm <- aggregate(cbind(spearman, coverage, test_logloss) ~ scenario + method, data = s16, FUN = mean, na.action = na.pass)
+sm <- sm[sm$method %in% c("B1_自報程度", "M1_個人", "M2_個人加自報先驗", "M3_完整含搭檔"), ]
+wide <- reshape(sm[, c("scenario", "method", "spearman")], idvar = "scenario", timevar = "method", direction = "wide")
+names(wide) <- sub("spearman.", "", names(wide))
+cov <- aggregate(coverage ~ scenario, data = s16[s16$method == "M2_個人加自報先驗", ], mean)
+wide$`M2 涵蓋率` <- pct(cov$coverage[match(wide$scenario, cov$scenario)], 1)
+wide$scenario[wide$scenario == "base"] <- "基準（σ=0.5, τ=0.3, r=0.7, 隨機分隊）"
+wide[, 2:5] <- lapply(wide[, 2:5], f2)
+names(wide)[1] <- "情境（Spearman 相關）"
+knitr::kable(wide, row.names = FALSE)
+```
+
+- **自報不準（r = 0.3）**：$\hat\beta$ 自動變小，先驗影響降低，M2 與 M1 表現幾乎一樣，沒有被不準的自報帶歪。
+- **依自報程度分隊**：這是政大野場常見做法，也是最有意思的結果。只看比賽的 M1 明顯變差（涵蓋率掉到 `r pct(mean(s16$coverage[s16$scenario=='依自報程度分隊' & s16$method=='M1_個人']))`），因為同一隊裡的人程度相近、比賽結果難以把隊友分開；加入自報先驗的 M2 則幾乎不受影響。這也提醒：分得越平均，模型「學得越慢」，實務上可以保留一點隨機性。
+- **實力差異小（σ = 0.3）**：大家都差不多時，排序本來就難，相關下降是合理的。
+
+# 驗證三：Python 模擬器的野場資料
+
+另一條工作線的 Python 模擬器（`volley-sim`，種子 20261126）用**完全不同的機制**產生資料：逐球模擬發球、攻擊、攔網，默契只存在於 10% 的組合，人數不足會扣分，每局打 15 或 20 分。共 `r vs$n_games` 局、`r vs$n_played` 位有出場的球員。模型不知道這些細節，是對「模型設定不完全正確」的考驗。
+
+```{r vs-table}
+cm <- vs$cmp
+cm$sigma <- ifelse(is.na(cm$sigma), "", f2(cm$sigma)); cm$tau <- ifelse(is.na(cm$tau), "", f2(cm$tau, 3))
+cm$delta <- ifelse(is.na(cm$delta), "", f2(cm$delta))
+cm$spearman <- f2(cm$spearman); cm$pearson <- f2(cm$pearson)
+names(cm) <- c("方法", "Spearman", "Pearson", "σ 估計", "τ 估計", "δ 估計（多一人）")
+knitr::kable(cm, row.names = FALSE)
+```
+
+```{r vs-plot, fig.height=4.8, fig.cap="M2 估計實力（含 95% 區間）與模擬器真實實力。顏色為自報程度。"}
+r <- vs$ratings[vs$ratings$sets > 0, ]
+ggplot(r, aes(theta_true, theta, colour = factor(level))) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0, alpha = 0.5) +
+  geom_point(size = 2) +
+  scale_colour_manual(values = c("#C53030", "#D69E2E", "#38A169", "#2B6CB0", "#6B46C1"), name = "自報程度") +
+  labs(x = "真實實力（Python 模擬器尺度）", y = "估計實力 θ（logit，相對平均）")
+```
+
+- 結合自報先驗後，估計與真實實力的 Spearman 相關 **`r f2(vs$cmp$spearman[vs$cmp$method=="M2_個人加自報先驗"])`**，明顯高於只看自報（`r f2(vs$cmp$spearman[vs$cmp$method=="B1_自報程度"])`）或只看比賽（`r f2(vs$cmp$spearman[vs$cmp$method=="M1_個人"])`）。
+- 把真值線性換到模型尺度後，95% 區間涵蓋率 `r pct(vs$coverage_rescaled, 1)`。
+- 多一人的優勢 $\hat\delta$ = `r f2(vs$fits[["M2_個人加自報先驗"]]$delta)`（SE `r f2(vs$fits[["M2_個人加自報先驗"]]$delta_se)`），在這份資料中不顯著。
+- 默契：$\hat\tau$ = `r f2(vs$fits[["M3_完整含搭檔"]]$tau, 2)`，但個別默契與真值的相關只有 `r f2(cor(vs$pairs$gamma, vs$pairs$chemistry))`，與第 5.3 節結論一致：有訊號，但無法指認是哪幾對。
+
+估計結果已輸出成 `output/ratings_volley_sim.csv`（欄位：player, theta, se, lower, upper, level, sets），Python 分隊原型可直接讀入，用 `theta` 做「依模型實力分隊」。
+
+# 結論與限制
+
+**結論**
+
+1. 以「每局名單＋比分」配合逐球 Bradley–Terry 模型，可以估出球員實力與 95% 區間（模擬中實際涵蓋率約 91–93%，略為樂觀）。
+2. 自報程度當先驗，在資料少時、以及依自報程度分隊時，大幅改善估計；自報不準時，模型會自動降低它的權重。
+3. 15／20 分短局的野場，大約 16 晚（約 190 局）後排序相關達 0.8 以上，結合自報後足以作為分隊依據。分隊建議使用 M2（不含默契）的估計。
+4. 搭檔默契在野場的資料量下幾乎無法辨識，應只當探索性指標。
+5. 在真實職業比分上，模型對下半季的單局勝負命中率約 `r pct(bl$summary$accuracy[bl$summary$method=="eb"])`。
+
+**限制**
+
+- 每球獨立假設略不成立（真實比賽 deuce 比預期多約 `r pct(bl$deuce$observed / bl$deuce$expected - 1)`）。
+- 野場參數（實力離散、自報相關）是假設，只能以敏感度分析處理；公開資料都是職業／青年正式比賽。
+- 實力假設在學期內不變；若要追蹤進步，可擴充為隨時間變動的狀態空間模型。
+- 只用比分，沒有用到攻擊成功率等技術統計；那部分可另外做描述統計。
+
+# 重現方式
+
+```
+Rscript analysis/01_bundesliga.R          # 約 5 秒
+R_REPS=200 Rscript analysis/02_simulation_study.R  # 4 核心約 25 分鐘
+Rscript analysis/03_volley_sim.R          # 約 10 秒（需要 volley-sim 資料夾）
+Rscript -e 'rmarkdown::render("report.Rmd")'
+```
+
+所有隨機過程都有固定種子。套件：`r paste(R.version.string)`，Matrix `r packageVersion("Matrix")`，ggplot2 `r packageVersion("ggplot2")`，rmarkdown `r packageVersion("rmarkdown")`。
+
+**資料來源與授權**
+
+| 資料 | 來源 | 授權 | 用途 |
+|---|---|---|---|
+| 德甲排球 2013/14–2018/19 每局比分 | R 套件 volleystat（github.com/bozhinvi/volleystat，commit c385865），原始資料：volleyball-bundesliga.de | CC0 | 樣本外驗證、借參數 |
+| DataVolley 範例比賽 | R 套件 datavolley（github.com/openvolley/datavolley） | MIT | Python 模擬器的技術統計基準（見 volley-sim/README） |
+| 野場資料 | 本專題模擬產生 | — | 模型驗證 |
