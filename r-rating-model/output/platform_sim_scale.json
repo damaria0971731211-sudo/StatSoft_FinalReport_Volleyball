@@ -1,0 +1,1 @@
+{"k": 0.413456, "theta_true_mean": -3.33333e-06, "sigma": 0.275765, "sigma_v": 0.345024, "beta": 0.201843, "delta": 0.0271426, "spearman_model_truth": 0.859699, "spearman_self_truth": 0.677478, "coverage": 0.98, "online_batch_cor": 0.994144, "n_games": 772, "n_players": 150}

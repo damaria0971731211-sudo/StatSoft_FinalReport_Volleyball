@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>跨球館平台示範</title>
+  <meta name="description" content="跨球館排球實力評分平台的互動原型：查跨館個人檔案與估計程度、試報名有門檻的球館、看當晚自動分隊。全部為模擬資料。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="stylesheet" href="platform.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="../index.htm">
+      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 2c-3 6-3 14 0 28M3.5 10c6 1 13 6 15.5 20M28.5 10c-7-1-14 3-19 15" fill="none" stroke="#ff8a3d" stroke-width="2"/></svg>
+      <span>跨球館排球實力評分平台<small>平台示範 · 模擬資料</small></span>
+    </a>
+    <nav class="header-links" aria-label="外部連結">
+      <a href="../index.htm">← 回成果首頁</a>
+      <a href="https://github.com/damaria0971731211-sudo/StatSoft_FinalReport_Volleyball">GitHub repo</a>
+    </nav>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="示範步驟">
+  <ul>
+    <li><a href="#profile">① 個人檔案</a></li>
+    <li><a href="#signup">② 報名</a></li>
+    <li><a href="#split">③ 當晚分隊</a></li>
+    <li><a href="#how">怎麼算的</a></li>
+  </ul>
+</nav>
+
+<main class="wrap">
+
+  <div class="sim-banner" role="note">
+    <b>模擬示範</b>
+    <span>球員、球館、比賽全部由 <code>volley-sim/platform</code> 產生（4 館、150 人、8 週、772 局），不是真實人物。實力估計來自 R 的跨館階層模型。</span>
+  </div>
+
+  <section class="intro">
+    <p class="eyebrow">平台原型</p>
+    <h1>一份檔案走遍各家球館，報名看比賽紀錄，不只看自報</h1>
+    <p class="muted">選一位球員，看他在各館累積的紀錄、平台估出來的程度與可信度，再替他報名有門檻的球館。</p>
+  </section>
+
+  <!-- 選球員 -->
+  <div class="card chooser">
+    <div class="chooser-row">
+      <label for="player-select">球員</label>
+      <select id="player-select"></select>
+      <span class="muted small">或從推薦案例開始：</span>
+    </div>
+    <div class="chips" id="chips" role="group" aria-label="推薦案例"></div>
+    <details class="newbie" id="newbie">
+      <summary>建立新檔案（還沒打過任何一局）</summary>
+      <div class="newbie-row">
+        <label>自報程度 <select id="nb-level"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></label>
+        <label>主場球館 <select id="nb-home"></select></label>
+        <button type="button" class="btn" id="nb-go">用這份檔案示範</button>
+      </div>
+    </details>
+    <label class="truth-toggle"><input type="checkbox" id="truth-toggle"> 顯示模擬真值（真實平台看不到，只用來檢查模型）</label>
+  </div>
+
+  <!-- ① 個人檔案 -->
+  <section class="step" id="profile" aria-labelledby="h-profile">
+    <div class="step-head"><span class="step-num">1</span><div><h2 id="h-profile">跨館個人檔案</h2><p class="muted" id="profile-sub"></p></div></div>
+
+    <div class="grid g4 kpi-grid" id="kpis"></div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h3 class="card-title">平台估計的程度落在哪一級</h3>
+        <p class="muted small">把估計實力與 95% 區間換成 1~5 級的機率。橘框是他自己報的等級。</p>
+        <div id="level-bars" class="level-bars"></div>
+        <p class="gap-text" id="gap-text"></p>
+      </div>
+      <div class="card">
+        <h3 class="card-title">打越多局，區間越窄</h3>
+        <p class="muted small">每打完一局就更新一次（線上貝氏更新）。陰影是 95% 區間，虛線是等級切點。</p>
+        <div class="chart" id="trace-chart"></div>
+      </div>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h3 class="card-title">各館出賽紀錄</h3>
+        <div class="table-wrap flat"><table id="venue-table"></table></div>
+        <p class="muted small" id="bridge-note"></p>
+      </div>
+      <div class="card">
+        <h3 class="card-title">最近 6 局</h3>
+        <div class="table-wrap flat"><table id="recent-table"></table></div>
+        <p class="muted small" id="atk-note"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ② 報名 -->
+  <section class="step" id="signup" aria-labelledby="h-signup">
+    <div class="step-head"><span class="step-num">2</span><div><h2 id="h-signup">選一間球館報名</h2><p class="muted">有門檻的球館，平台算「此人達到門檻的後驗機率 P」，再用三段式規則決定。</p></div></div>
+
+    <div class="rule-strip">
+      <span class="pill pass">P ≥ 0.8　放行</span>
+      <span class="pill trial">0.2 &lt; P &lt; 0.8　給試打名額</span>
+      <span class="pill block">P ≤ 0.2　擋下</span>
+      <span class="muted small">規則來自第 5 題：誤放（未達標卻放行）＝型一錯誤，傷害同場球友。</span>
+    </div>
+
+    <div class="venue-grid" id="venue-cards" role="radiogroup" aria-label="球館"></div>
+
+    <div class="card decision" id="decision" aria-live="polite"></div>
+  </section>
+
+  <!-- ③ 分隊 -->
+  <section class="step" id="split" aria-labelledby="h-split">
+    <div class="step-head"><span class="step-num">3</span><div><h2 id="h-split">報名截止，自動分隊</h2><p class="muted">以各館模擬資料的最後一晚名單為例，比較「自報蛇形」和「平台評分最佳化」兩種分法。</p></div></div>
+
+    <div class="card chooser">
+      <div class="chooser-row">
+        <label for="night-select">場次</label>
+        <select id="night-select"></select>
+        <label class="inline-check"><input type="checkbox" id="add-me" checked> 把目前這位球員加進名單（若已通過報名）</label>
+      </div>
+      <p class="muted small" id="night-info"></p>
+    </div>
+
+    <div class="grid g2" id="split-compare"></div>
+  </section>
+
+  <!-- 怎麼算的 -->
+  <section class="step" id="how" aria-labelledby="h-how">
+    <div class="step-head"><span class="step-num">?</span><div><h2 id="h-how">這個頁面是怎麼算的</h2></div></div>
+    <div class="grid g3">
+      <div class="card tight">
+        <h4>實力估計（R）</h4>
+        <p class="small muted">每一球 A 隊得分的 logit ＝ 兩隊平均實力差 ＋ 人數差效果。每人實力的先驗平均 ＝ 主場球館平均 ＋ β ×（自報 − 3），球館平均是隨機效果。跨館的人把各館串在同一把尺上。程式：<code>r-rating-model/R/platform_model.R</code>。</p>
+      </div>
+      <div class="card tight">
+        <h4>報名門檻（Python 第 5 題）</h4>
+        <p class="small muted">「限 4 級以上」寫成 H0：實力未達 4 級切點。P ＝ 後驗下實力 ≥ 切點的機率（常態近似）。只看自報的現況規則，放行的人有約三分之一其實未達標。結果說明：<code>python-team-split/docs/Q5_Q6_結果說明.md</code>。</p>
+      </div>
+      <div class="card tight">
+        <h4>分隊</h4>
+        <p class="small muted">評分最佳化：以估計實力蛇形發牌，再兩兩交換，讓最強與最弱隊的差距最小，並盡量每隊有舉球。預估勝率用同一個模型算到先拿到目標分數。邏輯同 <code>volleysplit/teaming.py</code>，這頁改寫成 JavaScript 在瀏覽器直接跑。</p>
+      </div>
+    </div>
+    <div class="card" id="validity"></div>
+    <p class="note">重現：<code>python volley-sim/platform_sim.py</code> → <code>Rscript analysis/07_platform_demo_export.R</code>（在 <code>r-rating-model/</code>）→ <code>python website/platform/src/build_platform_data.py</code>。等級切點與真值尺度的換算用到模擬真值（斜率 k），真實平台要改用試打資料校準，這是本示範的限制。</p>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">115-1 程式設計與統計軟體期末專題 · 跨球館排球實力評分平台 · 全部為模擬資料 · <a href="../index.htm">回成果首頁</a></div>
+</footer>
+
+<div class="tooltip" id="tooltip" role="tooltip"></div>
+<script src="platform-data.js"></script>
+<script src="platform.js"></script>
+</body>
+</html>
