@@ -63,11 +63,11 @@ pip install -r requirements.txt
 
 ## AI 使用
 
-本專題使用 Claude（claude.ai 專案）協助規劃、寫程式與整理文件；每項建議的採納或拒絕理由記錄在 `ai-log/00_總時間軸.md`。AI skill 見 `ai-skill/skills/balance-teams/SKILL.md`。
+本專題使用 Claude（claude.ai 專案）協助規劃、寫程式與整理文件；每項建議的採納或拒絕理由記錄在 `ai-log/00_階段大綱.md`。AI skill 見 `ai-skill/skills/balance-teams/SKILL.md`。
 
 ## 已知問題
 
 - 組別代號、教師網頁樣版尚未公布，網站暫用 Gxx。
-- 網站目前呈現單館版結果；跨館平台版待提案定稿後更新。
+- 主問題的確認性試驗（種子 20261218000 + k）尚未執行，網站目前列的是預試結果。
 - 報告、簡報、影片尚未完成。
 - 交件版本將打 tag `final-v1.0`（2026-12-18）。

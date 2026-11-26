@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>野場排球分隊專題</title>
-  <meta name="description" content="115-1 程式設計與統計軟體期末專題：政大體育館排球野場的報名、程度分級與分隊。用比賽結果估計球員實力，再以模擬比較分隊方法是否讓比賽更勢均力敵。">
+  <title>跨球館排球實力評分平台</title>
+  <meta name="description" content="115-1 程式設計與統計軟體期末專題：跨球館排球實力評分與報名平台。用多家球館累積的比賽結果校正自報程度，支援報名門檻與分隊。全部以公開資料與 4 家模擬球館的模擬資料示範。">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -17,11 +17,11 @@
   <div class="wrap">
     <a class="brand" href="#overview">
       <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 2c-3 6-3 14 0 28M3.5 10c6 1 13 6 15.5 20M28.5 10c-7-1-14 3-19 15" fill="none" stroke="#ff8a3d" stroke-width="2"/></svg>
-      <span>野場排球分隊專題<small>115-1 程式設計與統計軟體 · Gxx</small></span>
+      <span>跨球館排球實力評分平台<small>115-1 程式設計與統計軟體 · Gxx</small></span>
     </a>
     <nav class="header-links" aria-label="外部連結">
       <a href="https://github.com/damaria0971731211-sudo/StatSoft_FinalReport_Volleyball">GitHub repo</a>
-      <a href="r-rating-model/report.html">R 分析報告</a>
+      <a href="r-rating-model/platform_report.html">R 平台報告</a>
     </nav>
   </div>
 </header>
@@ -29,9 +29,11 @@
 <nav class="tabs" aria-label="章節">
   <ul>
     <li><a href="#overview">總覽</a></li>
-    <li><a href="#problem">問題與資料</a></li>
+    <li><a href="#platform">平台與問題</a></li>
+    <li><a href="#data">資料</a></li>
     <li><a href="#methods">方法</a></li>
-    <li><a href="#results">分隊結果</a></li>
+    <li><a href="#results">主結果</a></li>
+    <li><a href="#support">支持分析</a></li>
     <li><a href="#players">球員分析</a></li>
     <li><a href="#demo">分隊工具</a></li>
     <li><a href="#repro">程式與重現</a></li>
@@ -46,207 +48,325 @@
 <!-- ========== 總覽 ========== -->
 <section class="panel" id="p-overview" aria-labelledby="h-overview">
   <div class="hero">
-    <p class="eyebrow">政大體育館 · 晚餐場與消夜場</p>
-    <h1 id="h-overview">野場排球怎麼分隊，比賽才會勢均力敵？</h1>
-    <p>每晚 4 到 6 隊、每隊 4 到 6 人，臨時湊隊常常一面倒。本專題用「每局名單＋比分」估計每位球員的實力，再比較三種分隊方法。<span class="q">結論：依實力評分分隊，接近的比賽從三成多增加到四成以上，懸殊比賽少了將近一半。</span></p>
+    <p class="eyebrow">生活與研究工具路線（含模擬）</p>
+    <h1 id="h-overview">跨球館的比賽紀錄，能不能比「自報程度」更準地分級與分隊？</h1>
+    <p>打排球臨打時，分級多半靠自己報；每家球館各自分級，紀錄也不互通。本專題設計一個跨球館的實力評分平台：自報程度當起點，在多家球館累積的比賽結果越多，就越相信比賽。<span class="q">本學期交付的是平台的統計引擎，以及用 4 家模擬球館示範的網頁原型。</span></p>
     <div class="hero-meta">
       <span>作者：Iris<span class="todo">確認公開署名</span></span>
-      <span>資料：公開比賽紀錄＋模擬資料，不含真實球員</span>
+      <span>資料：公開比賽資料＋模擬資料，不含真實球員</span>
       <span>最後更新：2026-11-26</span>
     </div>
   </div>
 
+  <div class="callout" style="margin-top:20px">
+    <p><b>主問題（唯一一項）：</b>球員在多家球館累積比賽結果後算出的評分，是否比自報程度更準確地分級球員，並讓分隊更均衡？</p>
+    <p class="small"><b>事先鎖定的成功門檻</b>（2026-11-26 確認，不看結果再改）：① 評分與真實實力的 Spearman 相關，比自報至少高 0.05；② 依評分分隊的平均分差，比依自報蛇形分隊至少少 0.2 分。兩項都以 95% 信賴區間判定。</p>
+  </div>
+
   <div class="grid g3 kpis">
     <div class="card kpi">
-      <div class="label">分差 3 分以內的接近比賽</div>
-      <div class="value">41.1% <span class="from">← 33.6%</span></div>
-      <div class="delta">＋7.5 個百分點（95% CI 6.0～9.1）</div>
-      <div class="sub">評分分隊 vs 隨機分隊，模擬 1,000 晚</div>
+      <div class="label">① 分級準確度：與真實實力的 Spearman</div>
+      <div class="value">0.86 <span class="from">← 自報 0.68</span></div>
+      <div class="delta">＋0.18（門檻 ＋0.05）</div>
+      <div class="sub">預試，4 館模擬資料一份；確認性試驗待跑</div>
     </div>
     <div class="card kpi">
-      <div class="label">分差 10 分以上的懸殊比賽</div>
-      <div class="value">7.2% <span class="from">← 12.7%</span></div>
-      <div class="delta">減少 5.5 個百分點（95% CI 4.5～6.5）</div>
-      <div class="sub">同上</div>
+      <div class="label">② 分隊均衡度：平均分差</div>
+      <div class="value">−0.22 分</div>
+      <div class="delta" style="color:var(--text-2)">方向一致，但 95% CI −0.30～−0.14 未達 −0.2</div>
+      <div class="sub">預試，評分分隊 vs 自報蛇形，模擬 1,000 晚</div>
     </div>
     <div class="card kpi">
-      <div class="label">實力估計與真實實力的排序相關</div>
-      <div class="value">0.86 <span class="from">← 0.77</span></div>
-      <div class="delta">比只看自評程度更準</div>
-      <div class="sub">R 模型套用到模擬野場 229 局</div>
+      <div class="label">跨館比較需要多少人跨館？</div>
+      <div class="value">5%</div>
+      <div class="delta">每館約 2 人跨館，排名相關就從 0.69 升到 0.87</div>
+      <div class="sub">R 模擬研究，各館自己分級的情境</div>
     </div>
   </div>
+  <p class="note">以上都是開發期間的<b>預試結果，只列為探索</b>。正式判定使用事先記錄、未用過的種子（20261218000 + k，k = 1～1,000）重跑，結果出來後更新。所有球館與球員資料都是模擬的。</p>
 
   <h3>從這裡開始看</h3>
   <div class="grid g3 navcards">
-    <a class="card" href="#problem"><span class="num">01</span><h4>問題與資料</h4><p>痛點、可檢驗的問題、成功指標，以及公開資料和模擬資料怎麼來。</p></a>
-    <a class="card" href="#methods"><span class="num">02</span><h4>方法</h4><p>R 實力評分模型、Python 分隊演算法，兩種語言怎麼銜接。</p></a>
-    <a class="card" href="#results"><span class="num">03</span><h4>分隊結果</h4><p>三種分隊方法的比較、交叉驗證與敏感度分析。</p></a>
-    <a class="card" href="#players"><span class="num">04</span><h4>球員分析</h4><p>實力排名、攻擊成功率、位置、搭檔次數與默契，可以查任一位球員。</p></a>
+    <a class="card" href="#platform"><span class="num">01</span><h4>平台與問題</h4><p>三個痛點、平台的 8 個功能各自對應哪個統計問題。</p></a>
+    <a class="card" href="#results"><span class="num">02</span><h4>主結果</h4><p>兩項事先門檻的判定方式與目前的預試結果。</p></a>
+    <a class="card" href="#support"><span class="num">03</span><h4>支持分析</h4><p>跨館同一把尺、新人要打幾局、報名門檻錯誤率、實驗要幾晚。</p></a>
+    <a class="card" href="#methods"><span class="num">04</span><h4>方法</h4><p>R 跨館貝氏模型、Python 模擬與分隊，兩種語言怎麼銜接。</p></a>
     <a class="card" href="#demo"><span class="num">05</span><h4>分隊工具</h4><p>在瀏覽器裡直接輸入名單、按一下就分好隊。</p></a>
     <a class="card" href="#ai"><span class="num">06</span><h4>AI 協作</h4><p>AI 的建議、我的判斷、skill 與測試紀錄。</p></a>
   </div>
 </section>
 
-<!-- ========== 問題與資料 ========== -->
-<section class="panel" id="p-problem" aria-labelledby="h-problem">
+<!-- ========== 平台與問題 ========== -->
+<section class="panel" id="p-platform" aria-labelledby="h-platform">
   <div class="panel-head">
-    <p class="eyebrow">01 · 問題與資料</p>
-    <h2 id="h-problem">從「分隊不公平」到可以檢驗的統計問題</h2>
-    <p>報名、分級、分隊只是介面；這個專題的核心是：能不能從比賽結果把球員實力估準，以及估出來的實力是否真的讓比賽更接近。</p>
-    <div class="rubric"><span>對應評分：問題與構想 15</span><span>資料品質 15</span></div>
+    <p class="eyebrow">01 · 平台與問題</p>
+    <h2 id="h-platform">平台的每個功能，背後都是一個統計問題</h2>
+    <p>使用者看到的是功能；拿掉實力估計，就只剩報名表單。所以統計是這個作品的主體。</p>
+    <div class="rubric"><span>對應評分：問題與構想 15</span><span>統計方法 20</span></div>
   </div>
 
+  <h3>三個痛點</h3>
   <div class="grid g3">
-    <div class="card"><h4>使用者</h4><p class="muted">晚餐場、消夜場的野場參加者，以及現場負責排隊、分隊的召集人。</p></div>
-    <div class="card"><h4>痛點</h4><p class="muted">臨時分隊強弱不均、比賽一面倒；新來的人不知道自己程度；常常跟同一批人同隊。</p></div>
-    <div class="card"><h4>研究問題</h4><p class="muted">依比賽結果估計的實力分隊，是否比隨機分隊或依自評程度分隊，產生更勢均力敵的比賽？</p></div>
+    <div class="card"><h4>1 實力不均</h4><p class="muted small">在政大體育館晚餐場、消夜場（一晚約 4 至 6 隊、每隊 4 至 6 人）觀察到：分隊後強者集中，比賽一面倒。</p></div>
+    <div class="card"><h4>2 自報程度不準</h4><p class="muted small">校外球館報名多半自己選級別。有人高估、有人低估，同場的人體感都不好。</p></div>
+    <div class="card"><h4>3 紀錄不互通</h4><p class="muted small">每家球館各自分級。在 A 館打過的紀錄到 B 館不算數，各館的「中級」標準也不一樣。</p></div>
   </div>
 
-  <h3>成功指標</h3>
+  <h3>功能 ↔ 統計問題</h3>
+  <p class="muted small">第 2 列（分級）與第 6 列（分隊）回答主問題，其餘是支持分析，用來解釋主結果為何成立或不成立。</p>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>指標</th><th>定義</th><th>比較方式</th></tr></thead>
+      <thead><tr><th>#</th><th>平台功能</th><th>統計問題</th><th>方法</th><th>範圍</th><th>結果在</th></tr></thead>
       <tbody>
-        <tr><td>接近比賽比例</td><td>每局分差 ≤ 3 分的比例（主要指標）</td><td>三種分隊方法在同一批模擬夜晚上配對比較，附 95% 區間</td></tr>
-        <tr><td>懸殊比賽比例</td><td>每局分差 ≥ 10 分的比例</td><td>同上</td></tr>
-        <tr><td>平均分差</td><td>每局兩隊得分差的平均</td><td>同上</td></tr>
-        <tr><td>上場公平</td><td>每人上場局數的標準差</td><td>確認分隊沒有讓某些人一直坐板凳</td></tr>
-        <tr><td>實力估計準確度</td><td>估計實力與真實實力的 Spearman 相關、95% 區間涵蓋率</td><td>真實實力已知的模擬資料</td></tr>
+        <tr><td>1</td><td>顯示我的程度</td><td>實力是多少？有多不確定？</td><td>每分為二項的邏輯斯模型、貝氏估計與 95% 區間</td><td>必做</td><td><a href="#methods">方法</a></td></tr>
+        <tr class="hl"><td>2</td><td>校正自報程度</td><td>自報是否系統性高估或低估？哪些人誤差大？</td><td>配對比較、Bland–Altman 圖、誤差迴歸</td><td>必做 · 主問題</td><td><a href="#results">主結果</a></td></tr>
+        <tr><td>3</td><td>跨館同一把尺</td><td>各館的「中級」一樣嗎？要多少人跨館才比得起來？</td><td>階層模型，球館為隨機效果；模擬不同跨館比例</td><td>必做</td><td><a href="#support">支持分析</a></td></tr>
+        <tr><td>4</td><td>新手檔案</td><td>要打幾局評分才可信？</td><td>後驗區間寬度對局數的收斂；每晚更新 vs 批次估計</td><td>必做</td><td><a href="#support">支持分析</a></td></tr>
+        <tr><td>5</td><td>報名門檻</td><td>擋錯人、放錯人的機率各多少？</td><td>分類問題：誤放、誤擋、ROC 選門檻</td><td>必做</td><td><a href="#support">支持分析</a></td></tr>
+        <tr class="hl"><td>6</td><td>自動分隊</td><td>哪種分法比賽最接近？</td><td>模擬實驗比較三種分法的分差與信賴區間</td><td>必做 · 主問題</td><td><a href="#results">主結果</a></td></tr>
+        <tr><td>7</td><td>分隊成效驗證</td><td>真實球館要試幾晚才看得出差異？</td><td>模擬型檢定力分析</td><td>選做</td><td><a href="#support">支持分析</a></td></tr>
+        <tr><td>8</td><td>推薦搭檔</td><td>哪些人一起打特別好？</td><td>兩人同隊交互項、強度收縮</td><td>選做</td><td><a href="#players">球員分析</a></td></tr>
       </tbody>
     </table>
   </div>
 
-  <h3>資料：三份來源，各有用途</h3>
-  <p class="muted">沒有真實野場紀錄，所以用公開比賽資料設定參數與驗證模型，再用模擬資料回答研究問題。模擬資料的「真實實力」已知，可以檢查模型有沒有估對。</p>
+  <h3>本學期做到哪裡</h3>
+  <div class="grid g3">
+    <div class="card"><h4>必做</h4><p class="small muted">多球館模擬產生器、R 跨館貝氏實力模型（球館校正、自報先驗）、Python 每晚更新＋門檻＋分隊、評分 vs 自報的模擬比較、本網頁。</p></div>
+    <div class="card"><h4>選做</h4><p class="small muted">搭檔默契、攻擊成功率示範、球員進步的情境。</p></div>
+    <div class="card"><h4>未來工作（本學期不做）</h4><p class="small muted">真實帳號與登入、後端資料庫、球館系統串接、金流、真實球員資料與現場記錄。</p></div>
+  </div>
+</section>
+
+<!-- ========== 資料 ========== -->
+<section class="panel" id="p-data" aria-labelledby="h-data">
+  <div class="panel-head">
+    <p class="eyebrow">02 · 資料</p>
+    <h2 id="h-data">公開資料是證據，模擬資料是示範</h2>
+    <p>不蒐集任何野場個人資料。兩份彼此獨立的公開資料用來設定參數與驗證模型；4 家模擬球館的資料用來回答主問題、示範平台。</p>
+    <div class="rubric"><span>對應評分：資料品質 15</span></div>
+  </div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>資料</th><th>規模</th><th>來源與授權</th><th>用途</th></tr></thead>
+      <thead><tr><th>編號</th><th>資料</th><th class="num">規模</th><th>來源與授權</th><th>用途</th></tr></thead>
       <tbody>
-        <tr><td>德國排球甲級聯賽每局比分 2013/14–2018/19</td><td class="num">6,330 局</td><td>R 套件 <a href="https://github.com/bozhinvi/volleystat">volleystat</a>，CC0</td><td>用上半季預測下半季，驗證實力模型；借用實力離散程度與平均分差</td></tr>
-        <tr><td>DataVolley 範例比賽（逐球紀錄）</td><td class="num">127 球</td><td>R 套件 <a href="https://github.com/openvolley/datavolley">datavolley</a>，MIT</td><td>設定攻擊得分率、失誤率、被攔率等技術統計基準</td></tr>
-        <tr><td>模擬野場資料 <code>volley-sim</code></td><td class="num">6 週、229 局、80 人</td><td>本專題自行生成，種子 20261126</td><td>逐球模擬發球、攻擊、攔網與搭檔默契；當作「野場紀錄」</td></tr>
+        <tr><td>D1</td><td>DataVolley 範例比賽（逐球紀錄）</td><td class="num">127 球</td><td>R 套件 <a href="https://github.com/openvolley/datavolley">datavolley</a>，MIT</td><td>校準模擬器的得分、攻擊、發球機率</td></tr>
+        <tr><td>D2</td><td>德國排球甲級聯賽每局比分 2013/14–2018/19</td><td class="num">6,330 局</td><td>R 套件 <a href="https://github.com/bozhinvi/volleystat">volleystat</a>，CC0</td><td>樣本外驗證實力模型；與模擬器交叉驗證</td></tr>
+        <tr><td>D3</td><td>4 家模擬球館</td><td class="num">150 人、8 週、772 局</td><td>本專題 <code>volley-sim/platform_sim.py</code>，種子 20261126</td><td>回答主問題與支持分析；示範平台</td></tr>
       </tbody>
     </table>
   </div>
-  <p class="note">資料字典與生成規則：<a href="volley-sim/README.md">volley-sim/README.md</a>。所有球員都是代號（P001–P080），沒有真實人物。</p>
+
+  <h3>4 家模擬球館</h3>
+  <p class="muted small">V01 以政大體育館野場的時段與賽制為藍本，其餘三館是虛構的。各館水準與「自評文化」都是假設值，只寫在 <code>truth/</code>，模型看不到。</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>館</th><th>時段與賽制</th><th>報名門檻</th><th class="num">主場人數</th></tr></thead>
+      <tbody>
+        <tr><td>V01 政大體育館野場（模擬）</td><td>週一～四晚餐場、消夜場；15 或 20 分</td><td>無</td><td class="num">62</td></tr>
+        <tr><td>V02 虛構球館 B（市區付費臨打）</td><td>週二、四、六晚上；25 分</td><td>無</td><td class="num">46</td></tr>
+        <tr><td>V03 虛構球館 C（進階場）</td><td>週三、六晚上；25 分</td><td>自報 ≥ 4 級</td><td class="num">22</td></tr>
+        <tr><td>V04 虛構球館 D（新手友善）</td><td>週一、五、日晚上；15 分</td><td>自報 ≤ 3 級</td><td class="num">20</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">自報程度 = 真實實力 ＋ 主場的自評文化 ＋ 整體高估 ＋ 個人誤差，再切成 1～5 級。150 人中有 17 人在兩館以上出賽，各館之間要靠他們「串起來」。</p>
+
+  <h3>三步整合</h3>
+  <ol class="muted">
+    <li><b>校準</b>：用 D1 的逐球資料估「實力差 → 每分得分機率」，餵給 D3 模擬器。</li>
+    <li><b>驗證模型</b>：用 D2 德甲資料，以上半季估實力、預測下半季每局勝負（命中率 69%）。</li>
+    <li><b>交叉驗證模擬器</b>：德甲與模擬都有 25 分局，比較兩者每局分差的分布。<span class="todo">進行中</span></li>
+  </ol>
+  <p class="note">生成規則與欄位：<a href="volley-sim/README.md">volley-sim/README.md</a>。職業選手實力遠高於臨打，只借「分布形狀與相對差距」，不直接當成臨打數值，這列為限制。</p>
 </section>
 
 <!-- ========== 方法 ========== -->
 <section class="panel" id="p-methods" aria-labelledby="h-methods">
   <div class="panel-head">
-    <p class="eyebrow">02 · 方法</p>
-    <h2 id="h-methods">R 估實力，Python 分隊與模擬</h2>
-    <p>兩種語言各做一件實質的事，用 CSV 銜接：Python 產生比賽，R 估實力，Python 再讀回實力做分隊比較。</p>
+    <p class="eyebrow">03 · 方法</p>
+    <h2 id="h-methods">R 估實力，Python 模擬、門檻與分隊</h2>
+    <p>兩種語言各做一件實質的事，用 CSV 銜接；另以 R 批次估計當參考答案，獨立檢核 Python 的每晚更新。</p>
     <div class="rubric"><span>對應評分：統計方法 20</span><span>程式與重現 15</span></div>
   </div>
 
   <div class="flow" role="list" aria-label="分析流程">
-    <div class="step" role="listitem"><span class="lang py">Python</span><h4>1 模擬野場</h4><p>依公開資料的參數，逐球模擬 6 週的晚餐場與消夜場。</p><div class="io">輸出 games.csv、game_players.csv</div></div>
-    <div class="step" role="listitem"><span class="lang r">R</span><h4>2 估計實力</h4><p>逐球 Bradley–Terry 模型，自評程度當先驗，搭檔默契收縮到 0。</p><div class="io">輸出 ratings_volley_sim.csv</div></div>
-    <div class="step" role="listitem"><span class="lang py">Python</span><h4>3 分隊</h4><p>隨機、自評程度蛇形、評分最佳化三種方法。</p><div class="io">輸出各隊名單</div></div>
-    <div class="step" role="listitem"><span class="lang py">Python</span><h4>4 模擬比較</h4><p>同一批夜晚用三種方法各分一次，比較分差與上場公平。評分誤差依 R 模型的精度設定。</p><div class="io">輸出 summary.json</div></div>
+    <div class="step" role="listitem"><span class="lang py">Python</span><h4>1 模擬 4 家球館</h4><p>依 D1 校準的參數，逐球模擬 8 週、150 人的跨館報名與比賽。</p><div class="io">輸出 players.csv、matches.csv</div></div>
+    <div class="step" role="listitem"><span class="lang r">R</span><h4>2 跨館實力評分</h4><p>階層貝氏模型：自報當先驗、球館為隨機效果，附 95% 區間。</p><div class="io">輸出 ratings_platform_demo.csv</div></div>
+    <div class="step" role="listitem"><span class="lang py">Python</span><h4>3 門檻與分隊</h4><p>後驗機率決定是否放行；依評分最佳化分隊。</p><div class="io">輸出放行與分隊結果</div></div>
+    <div class="step" role="listitem"><span class="lang py">Python</span><h4>4 模擬比較</h4><p>同一批夜晚用三種方法各分一次，比較分差。</p><div class="io">輸出 summary.json</div></div>
   </div>
 
-  <h3>R：逐球 Bradley–Terry 實力模型</h3>
+  <h3>R：跨館貝氏實力模型</h3>
   <div class="grid g2">
     <div class="card">
-      <p>把一局看成很多個「球」。A 隊每一球得分機率 <i>p</i> 的 logit，等於兩隊平均實力之差，加上隊內搭檔默契之差，再加上人數差的效果。</p>
-      <pre><code>logit(p) = (θ̄A − θ̄B) + (γ̄A − γ̄B) + δ (nA − nB)
-θi  ~ N(β·(自評程度 − 3), σ²)   個人實力
-γjk ~ N(0, τ²)                  兩人同隊的額外默契</code></pre>
-      <p class="small muted">σ、τ 用經驗貝氏（Laplace 近似的邊際概似）估計；打得少的人會被拉向同程度的平均。只用 base R 與 Matrix，程式可以逐行讀懂。</p>
+      <p>把一局的每一分當成一次伯努利試驗，A 隊得分機率由兩隊平均實力差決定。同一局兩隊在同一館，所以球館只出現在先驗。</p>
+      <pre><code>logit P(A 得分) = θ̄A − θ̄B + δ (nA − nB)
+θi ~ N(α主場 + β·(自報i − 3), σ²)
+αv ~ N(0, σv²)          各館平均實力</code></pre>
+      <p class="small muted">σ、σv 用經驗貝氏（Laplace 近似的邊際概似）估計。打得少的人貼近自報先驗，打得多的人由比賽決定；沒有人跨館時，球館差距只剩先驗，模型會給很寬的區間。只用 base R 與 Matrix。</p>
     </div>
     <div class="card">
-      <h4>三層驗證</h4>
+      <h4>驗證</h4>
       <div class="table-wrap">
         <table>
           <thead><tr><th>驗證</th><th>結果</th></tr></thead>
           <tbody>
-            <tr><td>德甲真實比分，預測下半季 3,105 局</td><td>命中率 69%，log loss 0.585（擲硬幣 0.693）</td></tr>
-            <tr><td>自己的模擬，16 晚資料</td><td>排序相關 0.82，95% 區間實際涵蓋約 91–93%</td></tr>
-            <tr><td>Python 模擬器（機制不同）</td><td>排序相關 0.86，比只看自評的 0.77 高</td></tr>
+            <tr><td>D2 德甲真實比分，預測下半季 3,105 局</td><td>命中率 69%，log loss 0.585（擲硬幣 0.693）</td></tr>
+            <tr><td>R 自己的跨館模擬，跑館 10%</td><td>排名相關 0.88，95% 區間涵蓋 94.7%</td></tr>
+            <tr><td>D3 Python 4 館模擬（機制不同）</td><td>排名相關 0.86，比自報的 0.68 高</td></tr>
           </tbody>
         </table>
       </div>
-      <p class="small"><a href="r-rating-model/report.html">看完整 R 分析報告</a>（含公式、校準圖、敏感度分析）</p>
+      <p class="small"><a href="r-rating-model/platform_report.html">平台版 R 報告</a> · <a href="r-rating-model/report.html">單館版 R 報告</a></p>
     </div>
   </div>
 
   <h3>Python：三種分隊方法</h3>
   <div class="grid g3">
     <div class="card tight"><h4><span style="color:var(--series-1)">●</span> 隨機（基準）</h4><p class="small muted">把報名的人隨機分成 4 到 6 隊，模擬現場臨時湊隊。</p></div>
-    <div class="card tight"><h4><span style="color:var(--series-2)">●</span> 自評程度蛇形</h4><p class="small muted">依自評 1–5 級排序，用 1→N、N→1 的蛇形順序輪流分人。這是現場最常見的做法。</p></div>
-    <div class="card tight"><h4><span style="color:var(--series-3)">●</span> 評分最佳化</h4><p class="small muted">以實力評分做蛇形起點（實際使用時讀入 R 模型的估計），再兩兩交換球員，縮小最強與最弱隊的差距，並盡量讓每隊有舉球員。</p></div>
+    <div class="card tight"><h4><span style="color:var(--series-2)">●</span> 自報程度蛇形（主問題的比較對象）</h4><p class="small muted">依自報 1–5 級排序，用 1→N、N→1 的蛇形順序輪流分人。這是現場最常見的做法。</p></div>
+    <div class="card tight"><h4><span style="color:var(--series-3)">●</span> 評分最佳化</h4><p class="small muted">以實力評分做蛇形起點，再兩兩交換球員，縮小最強與最弱隊的差距，並盡量讓每隊有舉球員。</p></div>
   </div>
 </section>
 
-<!-- ========== 分隊結果 ========== -->
+<!-- ========== 主結果 ========== -->
 <section class="panel" id="p-results" aria-labelledby="h-results">
   <div class="panel-head">
-    <p class="eyebrow">03 · 分隊結果</p>
-    <h2 id="h-results">評分分隊讓接近的比賽變多，懸殊比賽變少</h2>
-    <p>模擬 1,000 個晚上，每晚用三種方法各分一次隊、打同樣的時間。點是平均，橫線是 95% 信賴區間。</p>
-    <div class="rubric"><span>對應評分：統計方法 20</span><span>表達 10</span></div>
+    <p class="eyebrow">04 · 主結果</p>
+    <h2 id="h-results">兩項事先門檻：目前的預試結果</h2>
+    <p>判定規則事先寫死：95% 信賴區間整段達門檻算「成立」；區間含 0 算「不成立」；其餘算「方向一致但未達門檻」。三種結果都照實報告。</p>
+    <div class="rubric"><span>對應評分：統計方法 20</span><span>問題與構想 15</span></div>
   </div>
 
-  <div class="card">
-    <div class="legend" aria-hidden="true"><span><i style="background:var(--series-1)"></i>隨機</span><span><i style="background:var(--series-2)"></i>自評程度蛇形</span><span><i style="background:var(--series-3)"></i>評分最佳化</span></div>
-    <div class="grid g3" id="chart-methods"></div>
-    <figcaption>圖 1　三種分隊方法的比賽結果（模擬 1,000 晚，資料：<a href="python-team-split/results/summary.json">summary.json</a>）。把滑鼠移到點上可看數值。</figcaption>
-  </div>
-
-  <h3>完整數字</h3>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>指標</th><th class="num">隨機</th><th class="num">自評程度蛇形</th><th class="num">評分最佳化</th><th>評分最佳化 − 蛇形（95% CI）</th></tr></thead>
+      <thead><tr><th>指標</th><th>事先門檻</th><th>預試結果（探索）</th><th>預試判讀</th><th>確認性試驗</th></tr></thead>
       <tbody>
+        <tr><td>① 分級準確度：Spearman（評分 − 自報）</td><td>≥ ＋0.05</td><td>4 館模擬：0.86 − 0.68 = ＋0.18<br><span class="small muted">單館模擬：0.86 − 0.77 = ＋0.09</span></td><td>方向一致，差距遠大於門檻；預試只有單一資料集，尚無區間</td><td><span class="todo">待跑</span></td></tr>
+        <tr><td>② 分隊均衡度：平均分差（評分分隊 − 自報蛇形）</td><td>≤ −0.2 分</td><td>−0.22 分（95% CI −0.30～−0.14），配對 1,000 晚<br><span class="small muted">換另一套模擬引擎：−0.24（−0.37～−0.10）</span></td><td>方向一致但未達門檻：區間靠近 0 的一端 −0.14 沒有超過 −0.2</td><td><span class="todo">待跑</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">確認性試驗使用事先記錄的新種子 20261218000 + k（k = 1～1,000），結果出來前不再調整模型或門檻。</p>
+
+  <h3>指標 ②：三種分隊方法的比較（預試）</h3>
+  <div class="card">
+    <div class="legend" aria-hidden="true"><span><i style="background:var(--series-1)"></i>隨機</span><span><i style="background:var(--series-2)"></i>自報程度蛇形</span><span><i style="background:var(--series-3)"></i>評分最佳化</span></div>
+    <div class="grid g3" id="chart-methods"></div>
+    <figcaption>圖 1　三種分隊方法的比賽結果（單館模擬 1,000 晚，資料：<a href="python-team-split/results/summary.json">summary.json</a>）。點是平均，橫線是 95% 信賴區間；把滑鼠移到點上可看數值。</figcaption>
+  </div>
+
+  <div class="table-wrap" style="margin-top:16px">
+    <table>
+      <thead><tr><th>指標</th><th class="num">隨機</th><th class="num">自報程度蛇形</th><th class="num">評分最佳化</th><th>評分最佳化 − 蛇形（95% CI）</th></tr></thead>
+      <tbody>
+        <tr><td>平均分差（主指標）</td><td class="num">5.53</td><td class="num">5.05</td><td class="num"><b>4.83</b></td><td>−0.22 分（−0.30～−0.14）</td></tr>
         <tr><td>接近比賽比例（分差 ≤ 3）</td><td class="num">33.6%</td><td class="num">38.1%</td><td class="num"><b>41.1%</b></td><td>＋2.9 個百分點（1.5～4.4）</td></tr>
         <tr><td>懸殊比賽比例（分差 ≥ 10）</td><td class="num">12.7%</td><td class="num">8.6%</td><td class="num"><b>7.2%</b></td><td>−1.4 個百分點（−2.2～−0.6）</td></tr>
-        <tr><td>平均分差</td><td class="num">5.53</td><td class="num">5.05</td><td class="num"><b>4.83</b></td><td>−0.22 分（−0.30～−0.14）</td></tr>
         <tr><td>最強與最弱隊真實實力差</td><td class="num">1.00</td><td class="num">0.65</td><td class="num"><b>0.37</b></td><td>−0.28（−0.30～−0.27）</td></tr>
-        <tr><td>每人上場局數標準差</td><td class="num">0.67</td><td class="num">0.66</td><td class="num"><b>0.65</b></td><td>−0.02（−0.03～−0.00）</td></tr>
       </tbody>
     </table>
   </div>
 
-  <h3>結論站得住嗎？</h3>
+  <h3>怎麼解讀</h3>
+  <ul class="muted">
+    <li>評分分隊讓最強與最弱隊的實力差縮小一半以上，但臨打只打 15 或 20 分、隨機性大，平均分差只少約 0.2 分，剛好落在門檻邊緣。</li>
+    <li>和隨機分隊比，差距明顯得多（平均分差 −0.70 分，接近比賽多 7.5 個百分點）；但主問題的比較對象是現場常用的自報蛇形。</li>
+    <li>敏感度分析：自報越不準，評分分隊的優勢越大；評分本身誤差越大，優勢越小。9 種情境下評分最佳化都最好。</li>
+  </ul>
+</section>
+
+<!-- ========== 支持分析 ========== -->
+<section class="panel" id="p-support" aria-labelledby="h-support">
+  <div class="panel-head">
+    <p class="eyebrow">05 · 支持分析</p>
+    <h2 id="h-support">跨館、新人、門檻與實驗設計</h2>
+    <p>這些分析解釋主結果為何成立或不成立，不另外宣稱「通過」。全部是模擬結果。</p>
+    <div class="rubric"><span>對應評分：統計方法 20</span></div>
+  </div>
+
+  <h3>功能 3：跨館同一把尺</h3>
   <div class="grid g2">
+    <figure class="card">
+      <img src="r-rating-model/figures/platform-bridge-plot-1.png" alt="兩張折線圖：跑館比例從 0% 到 20% 時，三種模型的跨館排名相關與 95% 區間涵蓋率。階層模型在 5% 以上明顯較好。" loading="lazy">
+      <figcaption>圖 2　各館自己分級時，跑館比例與跨館排名準確度（R 模擬，各 100 次）。</figcaption>
+    </figure>
     <div class="card">
-      <h4>換一套模擬引擎再比一次</h4>
-      <p class="small muted">把三種方法放進機制不同的 <code>volley-sim</code>（逐球攻防＋搭檔默契）重跑 500 晚，順序一樣：平均分差 隨機 5.62、蛇形 5.02、評分最佳化 4.78。評分最佳化 − 蛇形 = −0.24 分（95% CI −0.37～−0.10）。</p>
-    </div>
-    <div class="card">
-      <h4>敏感度分析：自評和評分有多不準</h4>
-      <p class="small muted">在 9 種情境下，評分最佳化都最好。自評越不準，蛇形越接近隨機；評分誤差變大時，評分最佳化的優勢縮小。</p>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>自評雜訊</th><th class="num">隨機</th><th class="num">蛇形</th><th class="num">評分最佳化</th></tr></thead>
-          <tbody>
-            <tr><td>低（0.3）</td><td class="num">33.3%</td><td class="num">40.1%</td><td class="num">40.5%</td></tr>
-            <tr><td>中（0.7）</td><td class="num">33.3%</td><td class="num">37.9%</td><td class="num">40.2%</td></tr>
-            <tr><td>高（1.2）</td><td class="num">33.3%</td><td class="num">37.2%</td><td class="num">38.0%</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p class="small muted">表中為接近比賽比例，評分誤差固定在中等（0.8），每格 200 晚。</p>
+      <h4>重點</h4>
+      <ul class="small muted">
+        <li>不加球館效果，跨館排名會錯，而且區間過窄：跑館 10% 時，單館模型的 Spearman 0.77、涵蓋率 84%。</li>
+        <li>階層模型在跑館 5%（每館約 2 人）時就升到 0.87，10% 時 0.88。</li>
+        <li>完全沒有人跨館時，模型無法比較各館，但會誠實地放寬區間（涵蓋率仍有 89%）。</li>
+        <li>在 Python 4 館資料上，階層模型<b>沒有</b>比單館模型好（兩者都是 0.86）。原因是那份資料的自報本來就用全台同一把尺，自報已經把各館連起來。這是不利結果，照實列出。</li>
+      </ul>
     </div>
   </div>
 
-  <h3>限制</h3>
-  <ul class="muted">
-    <li>結果建立在模擬上；野場的實力差異、自評準確度是依公開資料推估的假設，已用敏感度分析檢查。</li>
-    <li>真實比賽的 deuce 比「每球獨立」假設多約 16%，模型對分差的不確定性略為低估，但不影響實力排序。</li>
-    <li>分得越平均，模型從比賽中「學」實力越慢；實務上可以保留一點隨機性。</li>
-  </ul>
+  <h3>功能 4：新人要打幾局評分才可信？</h3>
+  <div class="grid g2">
+    <figure class="card">
+      <img src="r-rating-model/figures/platform-cold-width-1.png" alt="折線圖：新人 95% 區間半寬隨上場局數縮小，自報準確與不填自報兩條線。" loading="lazy">
+      <figcaption>圖 3　新人 95% 區間半寬隨上場局數縮小（400 位模擬新人）。</figcaption>
+    </figure>
+    <div class="card">
+      <h4>重點</h4>
+      <ul class="small muted">
+        <li>自報準確的新人要打約 53 局（約 11 晚）區間才縮到一個級距。一局只有一個比分，卻要分給 4～6 位隊友，個人資訊被稀釋。</li>
+        <li>不填自報要 69 局：一個大致誠實的自報，抵得上約 16 局比賽。</li>
+        <li>自報錯 2 級，約 29 局修正一半。</li>
+        <li>平台建議：等級旁顯示可信度；新人先打「定級場」；每局即時更新、每晚關館後用批次模型重估。</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>功能 5：報名門檻要設多嚴？</h3>
+  <div class="grid g2">
+    <figure class="card">
+      <img src="python-team-split/figures/q5_tradeoff.png" alt="誤放率與正確放行率的取捨圖，標出自報 4 級以上放行、Youden、誤放率 5% 等門檻位置。" loading="lazy">
+      <figcaption>圖 4　不同門檻下誤放與正確放行的取捨。</figcaption>
+    </figure>
+    <div class="card">
+      <h4>重點</h4>
+      <ul class="small muted">
+        <li>只看自報 ≥ 4 級就放行：放行的人約三分之一其實未達標。</li>
+        <li>改用「自報當先驗、比賽紀錄更新」的後驗機率，在差不多的正確放行率下，誤放率從約 24% 降到約 17%。</li>
+        <li>門檻多嚴是價值判斷；誤放成本是誤擋的 2 倍時，最佳門檻約 P ≥ 0.67。</li>
+        <li>約 150 局後八成的人能判定，單館累積太慢，這正是跨館的理由。</li>
+      </ul>
+      <p class="small"><a href="python-team-split/docs/Q5_Q6_結果說明.md">第 5、6 題完整說明</a><span class="todo">數字待依新資料重跑確認</span></p>
+    </div>
+  </div>
+
+  <h3>功能 7：真實球館要試幾晚？</h3>
+  <div class="grid g2">
+    <figure class="card">
+      <img src="python-team-split/figures/q6_power.png" alt="檢定力曲線：每組晚數增加時，評分分隊對隨機與對自報蛇形的檢定力。" loading="lazy">
+      <figcaption>圖 5　以「晚」為單位隨機分派的檢定力（α = 0.05）。</figcaption>
+    </figure>
+    <div class="card">
+      <h4>重點</h4>
+      <ul class="small muted">
+        <li>評分分隊 vs 隨機：效果中等（d = 0.52），每組約 64 晚，一個球館約 16 週。</li>
+        <li>評分分隊 vs 自報蛇形：效果小（d = 0.17），每組約 512 晚，單館要兩年多；串連 20 館約 6～7 週。<b>單館做不到的實驗，平台做得到。</b></li>
+        <li>實驗必須以「晚」為單位：把同一晚的局當獨立樣本，名目 5% 的檢定會有 7～8% 誤報。</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>功能 2：誰容易高估自己？</h3>
+  <div class="card">
+    <p class="small muted">用不含自報先驗的估計實力，推算每個人「應有的級數」。個人的高估或低估抓得到（與真值相關 0.88），可以當作平台提醒；但性別、球齡、主場等群體效果在 150 人時大多不顯著，是檢定力不足。完整的自報偏誤檢定<span class="todo">進行中</span>。</p>
+    <p class="small"><a href="r-rating-model/platform_report.html">平台版 R 報告第 6.1 節</a></p>
+  </div>
 </section>
 
 <!-- ========== 球員分析 ========== -->
 <section class="panel" id="p-players" aria-labelledby="h-players">
   <div class="panel-head">
-    <p class="eyebrow">04 · 球員分析</p>
+    <p class="eyebrow">06 · 球員分析</p>
     <h2 id="h-players">實力、攻擊、位置與搭檔</h2>
-    <p>以模擬野場 6 週、229 局的資料示範系統能產出的球員統計。所有球員都是模擬代號；實際使用時只給本人看自己的資料，不公開排名。</p>
+    <p>以單館模擬（政大野場藍本，6 週、229 局）示範平台能產出的球員統計，對應功能 1 與功能 8。所有球員都是模擬代號；實際使用時只給本人看自己的資料，不公開排名。</p>
     <div class="rubric"><span>對應評分：統計方法 20</span><span>資料品質 15</span></div>
   </div>
 
@@ -295,7 +415,7 @@
 <!-- ========== 分隊工具 ========== -->
 <section class="panel" id="p-demo" aria-labelledby="h-demo">
   <div class="panel-head">
-    <p class="eyebrow">05 · 分隊工具</p>
+    <p class="eyebrow">07 · 分隊工具</p>
     <h2 id="h-demo">在瀏覽器裡直接分隊</h2>
     <p>Python 分隊程式透過 Pyodide 在瀏覽器裡執行，不用安裝任何東西。第一次載入約需 20 到 40 秒。</p>
     <div class="rubric"><span>對應評分：程式與重現 15</span><span>表達 10</span></div>
@@ -325,36 +445,34 @@ python -m volleysplit split data/sample_signups.csv \
 <!-- ========== 程式與重現 ========== -->
 <section class="panel" id="p-repro" aria-labelledby="h-repro">
   <div class="panel-head">
-    <p class="eyebrow">06 · 程式與重現</p>
+    <p class="eyebrow">08 · 程式與重現</p>
     <h2 id="h-repro">每個結果都可以從原始碼重跑</h2>
-    <p>所有隨機過程都有固定種子。四個資料夾各有 README，說明輸入、輸出與執行方式。</p>
+    <p>所有隨機過程都有固定種子。2026-11-26 在乾淨環境實測：60 項測試通過，兩個模擬器重跑的輸出逐位元相同。</p>
     <div class="rubric"><span>對應評分：程式與重現 15</span></div>
   </div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>資料夾</th><th>語言</th><th>做什麼</th><th>測試</th></tr></thead>
+      <thead><tr><th>資料夾</th><th>語言</th><th>做什麼</th><th>測試與環境</th></tr></thead>
       <tbody>
-        <tr><td><a href="volley-sim/README.md">volley-sim/</a></td><td>Python</td><td>模擬野場資料產生器</td><td>固定種子，可重現</td></tr>
-        <tr><td><a href="r-rating-model/README.md">r-rating-model/</a></td><td>R</td><td>實力評分模型與三層驗證</td><td>模擬研究 200 次重複；<code>renv.lock</code></td></tr>
-        <tr><td><a href="python-team-split/README.md">python-team-split/</a></td><td>Python</td><td>報名、分隊、模擬比較、網頁工具</td><td>pytest 60 項；<code>requirements.txt</code></td></tr>
+        <tr><td><a href="volley-sim/README.md">volley-sim/</a></td><td>Python</td><td>單館與 4 館模擬資料產生器</td><td>固定種子；<code>SHA256SUMS.txt</code> 可核對</td></tr>
+        <tr><td><a href="r-rating-model/README.md">r-rating-model/</a></td><td>R</td><td>實力評分模型、跨館階層模型、冷啟動、三層驗證</td><td>模擬研究 100～200 次重複；<code>renv.lock</code></td></tr>
+        <tr><td><a href="python-team-split/README.md">python-team-split/</a></td><td>Python</td><td>報名、分隊、模擬比較、門檻與實驗設計、網頁工具</td><td>pytest 60 項；<code>requirements.txt</code></td></tr>
         <tr><td><a href="ai-skill/README.md">ai-skill/</a></td><td>Python</td><td>分隊檢查 AI skill 與 5 次執行紀錄</td><td>含 2 個邊界案例與暴力解檢核</td></tr>
       </tbody>
     </table>
   </div>
   <h3>重跑主要結果</h3>
-  <pre><code># 1. 模擬野場資料
-cd volley-sim && python volley_sim.py && cd ..
-# 2. R 實力評分（約 10 秒）
-cd r-rating-model && Rscript analysis/03_volley_sim.R && cd ..
-# 3. 三種分隊方法比較
-cd python-team-split && python -m volleysplit simulate --reps 1000 && python -m pytest -q</code></pre>
-  <p class="note">GitHub repo：<a href="https://github.com/damaria0971731211-sudo/StatSoft_FinalReport_Volleyball">StatSoft_FinalReport_Volleyball</a>　交件版本 tag <code>final-v1.0</code><span class="todo">定稿時建立</span></p>
+  <pre><code>pip install -r requirements.txt
+cd volley-sim && python platform_sim.py && python volley_sim.py && cd ..
+cd python-team-split && python -m volleysplit simulate --reps 1000 && python -m pytest -q && cd ..
+cd r-rating-model && Rscript analysis/06_platform_python.R && cd ..</code></pre>
+  <p class="note">完整步驟與每步時間見 <a href="README.md">README</a>。GitHub repo：<a href="https://github.com/damaria0971731211-sudo/StatSoft_FinalReport_Volleyball">StatSoft_FinalReport_Volleyball</a>　交件版本 tag <code>final-v1.0</code><span class="todo">定稿時建立</span></p>
 </section>
 
 <!-- ========== AI 協作 ========== -->
 <section class="panel" id="p-ai" aria-labelledby="h-ai">
   <div class="panel-head">
-    <p class="eyebrow">07 · AI 協作</p>
+    <p class="eyebrow">09 · AI 協作</p>
     <h2 id="h-ai">AI 提建議，我做判斷</h2>
     <p>使用 Claude（claude.ai 專案，多條平行工作線）。每個重要決定都記下 AI 的建議、我採納或拒絕的理由，以及對應的檔案。</p>
     <div class="rubric"><span>對應評分：AI 協作 15</span></div>
@@ -368,35 +486,36 @@ cd python-team-split && python -m volleysplit simulate --reps 1000 && python -m 
     <table>
       <thead><tr><th>AI 的建議</th><th>我的判斷</th><th>影響</th></tr></thead>
       <tbody>
-        <tr><td>報名＋分隊單獨做會被看成只有表單，建議以「實力估計＋分隊比較」當統計核心</td><td>接受；題目與場地規模由我提出</td><td>確立研究問題</td></tr>
-        <tr><td>這週開始在現場記錄野場比分</td><td><b>拒絕</b>：沒辦法在現場收集</td><td>改為公開資料＋模擬資料，整個資料策略改變</td></tr>
+        <tr><td>報名＋分隊單獨做會被看成只有表單，建議以實力估計當統計核心</td><td>接受；題目與場地規模由我提出</td><td>確立研究方向</td></tr>
+        <tr><td>這週開始在現場記錄野場比分</td><td><b>拒絕</b>：沒辦法在現場收集</td><td>改為公開資料＋模擬資料</td></tr>
         <tr><td>成果可以做 Streamlit 或 LINE 流程</td><td>改為 GitHub Pages 網頁</td><td>決定成果形式</td></tr>
-        <tr><td>—</td><td>我對照指引發現「至少 3 份資料、2 個來源」的缺口</td><td>加入德甲比分與 DataVolley 兩份公開資料</td></tr>
+        <tr><td>—</td><td>我加入校外球館的經驗：自報不準、紀錄不互通</td><td>題目擴大成跨球館平台</td></tr>
+        <tr><td>主問題有 6 題並列</td><td>收斂成 1 個主問題，並事先鎖定兩項門檻</td><td>避免看結果再挑指標</td></tr>
       </tbody>
     </table>
   </div>
 
   <h3>證據檔</h3>
   <div class="grid g3">
-    <a class="card tight" href="ai-skill/skills/balance-teams/SKILL.md"><h4>AI skill：balance-teams</h4><p class="small muted">檢查分隊結果是否合理；跑 5 次，含髒資料與人數不足兩個邊界案例。</p></a>
+    <a class="card tight" href="ai-skill/skills/balance-teams/SKILL.md"><h4>AI skill：balance-teams</h4><p class="small muted">分隊平衡檢核；跑 5 次，含髒資料與人數不足兩個邊界案例。</p></a>
     <a class="card tight" href="ai-skill/docs/skill-run-log.md"><h4>Skill 執行與錯誤修正</h4><p class="small muted">測試中發現報告人數與檔案列數不一致（D01）並修正。</p></a>
-    <a class="card tight" href="ai-log/00_總時間軸.md"><h4>AI 協作時間軸</h4><p class="small muted">我說的話原文照抄，AI 回覆為摘要，附我的判斷。</p></a>
+    <a class="card tight" href="ai-log/00_階段大綱.md"><h4>AI 協作階段大綱</h4><p class="small muted">每個階段在做什麼、完成什麼、下一步，以及我做的關鍵決定。</p></a>
     <a class="card tight" href="ai-skill/docs/agent-workflow-template.md"><h4>Agent 工作流程</h4><p class="small muted">Define 到 Reflect 六步驟的實例。<span class="todo">Review、Reflect 待填</span></p></a>
-    <a class="card tight" href="ai-skill/docs/vibe-coding-log-template.md"><h4>Vibe coding 紀錄</h4><p class="small muted">需求、生成版本、人工修改與測試差異。<span class="todo">待填實例</span></p></a>
+    <a class="card tight" href="ai-skill/docs/vibe-coding-log-template.md"><h4>Vibe coding 紀錄</h4><p class="small muted">網站改版：需求原文、生成版本、人工修改與前後差異。<span class="todo">待填</span></p></a>
   </div>
 </section>
 
 <!-- ========== 歷程與分工 ========== -->
 <section class="panel" id="p-process" aria-labelledby="h-process">
   <div class="panel-head">
-    <p class="eyebrow">08 · 歷程與分工</p>
+    <p class="eyebrow">10 · 歷程與分工</p>
     <h2 id="h-process">一人一組，用外部試跑補交叉檢查</h2>
     <div class="rubric"><span>對應評分：團隊合作 10</span></div>
   </div>
   <div class="table-wrap">
     <table>
       <thead><tr><th>成員</th><th>負責項目</th><th>對應成果</th><th>審查人</th></tr></thead>
-      <tbody><tr><td>Iris</td><td>題目、方法選擇、全部成果的審查與整合</td><td>本網站所有內容</td><td>外部試跑同學<span class="todo">待補</span></td></tr></tbody>
+      <tbody><tr><td>Iris</td><td>題目、主問題與門檻、方法選擇、全部成果的審查與整合</td><td>本網站所有內容</td><td>外部試跑同學<span class="todo">待補</span></td></tr></tbody>
     </table>
   </div>
   <h3>里程碑</h3>
@@ -404,21 +523,22 @@ cd python-team-split && python -m volleysplit simulate --reps 1000 && python -m 
     <table>
       <thead><tr><th>日期</th><th>里程碑</th><th>狀態</th></tr></thead>
       <tbody>
-        <tr><td>2026-11-26</td><td>確定題目與資料策略；完成模擬資料、R 模型、Python 原型、AI skill、網站</td><td>完成</td></tr>
-        <tr><td>2026-12-03</td><td>AI 流程紀錄與基準比較</td><td>進行中</td></tr>
-        <tr><td>2026-12-11</td><td>Skill 與測試定稿</td><td>—</td></tr>
-        <tr><td>2026-12-17</td><td>完整測試版、外部同學試跑</td><td>—</td></tr>
-        <tr><td>2026-12-18</td><td>定稿交件（23:59）</td><td>—</td></tr>
+        <tr><td>2026-11-26</td><td>題目擴大為跨球館平台；主問題與門檻鎖定；模擬器、R 模型、Python 原型、AI skill、網站完成初版</td><td>完成</td></tr>
+        <tr><td>2026-11-28</td><td>提案定稿交老師</td><td>進行中</td></tr>
+        <tr><td>2026-12-03</td><td>AI 流程圖、基準比較、德甲 × 模擬交叉驗證</td><td>—</td></tr>
+        <tr><td>2026-12-11</td><td>Skill 與測試回報</td><td>—</td></tr>
+        <tr><td>2026-12-17</td><td>完整測試版、外部同學試跑與重跑</td><td>—</td></tr>
+        <tr><td>2026-12-18</td><td>確認性試驗、定稿交件（23:59）</td><td>—</td></tr>
       </tbody>
     </table>
   </div>
-  <p class="note">每次討論的完整紀錄：<a href="ai-log/00_總時間軸.md">ai-log/00_總時間軸.md</a></p>
+  <p class="note">各階段紀錄：<a href="ai-log/00_階段大綱.md">ai-log/00_階段大綱.md</a></p>
 </section>
 
 <!-- ========== 報告與引用 ========== -->
 <section class="panel" id="p-deliverables" aria-labelledby="h-deliverables">
   <div class="panel-head">
-    <p class="eyebrow">09 · 報告與引用</p>
+    <p class="eyebrow">11 · 報告與引用</p>
     <h2 id="h-deliverables">交件檔案、引用與授權</h2>
     <div class="rubric"><span>對應評分：表達 10</span></div>
   </div>
@@ -430,14 +550,15 @@ cd python-team-split && python -m volleysplit simulate --reps 1000 && python -m 
         <li><span>簡報</span><span><a href="slides/Gxx_Slides.pdf">PDF</a> · <a href="slides/Gxx_Slides.pptx">PPTX</a><span class="todo">待補</span></span></li>
         <li><span>專題影片（5–7 分鐘）</span><span>雲端觀看連結<span class="todo">待補</span></span></li>
         <li><span>字幕與文字稿</span><span><span class="todo">待補</span></span></li>
-        <li><span>R 分析報告</span><span><a href="r-rating-model/report.html">HTML</a></span></li>
+        <li><span>R 平台版報告</span><span><a href="r-rating-model/platform_report.html">HTML</a></span></li>
+        <li><span>R 單館版報告</span><span><a href="r-rating-model/report.html">HTML</a></span></li>
       </ul>
     </div>
     <div class="card">
       <h4>引用與授權</h4>
       <ul class="links">
-        <li><span>volleystat（德甲比分）</span><span class="what">CC0 · <a href="https://github.com/bozhinvi/volleystat">GitHub</a></span></li>
-        <li><span>datavolley（範例比賽）</span><span class="what">MIT · <a href="https://github.com/openvolley/datavolley">GitHub</a></span></li>
+        <li><span>D1 datavolley（範例比賽）</span><span class="what">MIT · <a href="https://github.com/openvolley/datavolley">GitHub</a></span></li>
+        <li><span>D2 volleystat（德甲比分）</span><span class="what">CC0 · <a href="https://github.com/bozhinvi/volleystat">GitHub</a></span></li>
         <li><span>Pyodide（瀏覽器執行 Python）</span><span class="what">MPL-2.0</span></li>
         <li><span>Noto Sans TC 字型</span><span class="what">SIL OFL</span></li>
         <li><span>檔案清單</span><span><a href="Gxx_manifest.csv">Gxx_manifest.csv</a></span></li>
@@ -446,16 +567,17 @@ cd python-team-split && python -m volleysplit simulate --reps 1000 && python -m 
   </div>
   <h3>公開範圍與已知問題</h3>
   <ul class="muted">
-    <li>網站、程式與模擬資料全部公開；不含任何真實球員個資。</li>
-    <li>組別代號尚未公布，暫以 Gxx 表示。</li>
-    <li>報告、簡報與影片完成後補上連結。</li>
+    <li>網站、程式與模擬資料全部公開；不含任何真實球員個資。模擬球員一律用代號。</li>
+    <li>真實平台的個資設計列在報告：跨館累積紀錄需球員同意、評分不公開排名、只對球館顯示「是否達門檻」。</li>
+    <li>組別代號、教師網頁樣版尚未公布，暫以 Gxx 表示。</li>
+    <li>「模擬＋公開資料」已向老師詢問，待回覆。</li>
   </ul>
 </section>
 
 </main>
 
 <footer>
-  <div class="wrap">115-1 程式設計與統計軟體 期末專題 · 國立政治大學統計學系 · 最後更新 2026-11-26</div>
+  <div class="wrap">115-1 程式設計與統計軟體 期末專題 · 國立政治大學統計學系 · 全部資料為公開資料與模擬資料 · 最後更新 2026-11-26</div>
 </footer>
 
 <div class="tooltip" id="tooltip" role="tooltip"></div>
