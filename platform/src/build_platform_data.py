@@ -4,7 +4,7 @@
   volley-sim/platform/data/*.csv          Python 跨球館模擬器（4 館、150 人、8 週）
   volley-sim/platform/truth/*.csv         模擬真值（只有模擬才有，頁面上預設隱藏）
   r-rating-model/output/*_platform_sim.*  analysis/07_platform_demo_export.R 的輸出
-執行：python3 website/platform/src/build_platform_data.py（在專案根目錄）
+執行：python3 platform/src/build_platform_data.py（在 repo 根目錄）
 """
 from __future__ import annotations
 
@@ -14,10 +14,12 @@ import math
 from collections import defaultdict
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
+HERE = Path(__file__).resolve()
+# 往上找含 volley-sim/ 的資料夾當專案根目錄（repo 根目錄 platform/src/ 或專案資料夾 website/platform/src/ 都能跑）
+ROOT = next(p for p in HERE.parents if (p / "volley-sim").is_dir())
 SIM = ROOT / "volley-sim" / "platform"
 ROUT = ROOT / "r-rating-model" / "output"
-OUT = ROOT / "website" / "platform" / "platform-data.js"
+OUT = HERE.parents[1] / "platform-data.js"
 
 LEVEL_CUTS_TRUE = [-1.2, -0.4, 0.4, 1.2]  # volley-sim 自報 1~5 級的切點（真值尺度）
 SESSION_ZH = {"dinner": "晚餐場", "late": "宵夜場", "night": "夜場"}
@@ -143,7 +145,7 @@ def main() -> None:
         },
         "venues": venues, "players": players, "nights": list(last_night.values()),
     }
-    OUT.write_text("// 自動產生：website/platform/src/build_platform_data.py。全部是模擬資料。\nwindow.PLATFORM_DATA=" +
+    OUT.write_text("// 自動產生：platform/src/build_platform_data.py。全部是模擬資料。\nwindow.PLATFORM_DATA=" +
                    json.dumps(data, ensure_ascii=False, separators=(",", ":")) + ";\n", encoding="utf-8")
     print(f"寫出 {OUT}（{OUT.stat().st_size/1024:.0f} KB），球員 {len(players)}、球館 {len(venues)}")
 
