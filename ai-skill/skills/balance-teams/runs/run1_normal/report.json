@@ -1,0 +1,95 @@
+{
+  "roster": "examples/normal_roster.csv",
+  "teams_requested": 5,
+  "seed": 115,
+  "n_rows": 26,
+  "n_players": 26,
+  "errors": [],
+  "warnings": [
+    "有 5 人沒有 rating，改用 level×2 換算，兩種尺度混用請留意"
+  ],
+  "status": "OK",
+  "teams": [
+    {
+      "team": 1,
+      "size": 6,
+      "mean_strength": 5.763,
+      "sum_strength": 34.58,
+      "setters": 1,
+      "players": [
+        "P01",
+        "P03",
+        "P09",
+        "P18",
+        "P07",
+        "P05"
+      ]
+    },
+    {
+      "team": 2,
+      "size": 5,
+      "mean_strength": 5.782,
+      "sum_strength": 28.91,
+      "setters": 1,
+      "players": [
+        "P16",
+        "P19",
+        "P13",
+        "P06",
+        "P25"
+      ]
+    },
+    {
+      "team": 3,
+      "size": 5,
+      "mean_strength": 5.79,
+      "sum_strength": 28.95,
+      "setters": 1,
+      "players": [
+        "P21",
+        "P11",
+        "P12",
+        "P04",
+        "P22"
+      ]
+    },
+    {
+      "team": 4,
+      "size": 5,
+      "mean_strength": 5.75,
+      "sum_strength": 28.75,
+      "setters": 1,
+      "players": [
+        "P02",
+        "P20",
+        "P14",
+        "P17",
+        "P26"
+      ]
+    },
+    {
+      "team": 5,
+      "size": 5,
+      "mean_strength": 5.716,
+      "sum_strength": 28.58,
+      "setters": 1,
+      "players": [
+        "P24",
+        "P23",
+        "P10",
+        "P15",
+        "P08"
+      ]
+    }
+  ],
+  "mean_gap": 0.074,
+  "objective": 0.074,
+  "teams_without_setter": 0,
+  "baseline_random": {
+    "reps": 2000,
+    "mean_gap_mean": 2.058,
+    "mean_gap_p05": 1.024,
+    "mean_gap_median": 2.02,
+    "share_random_at_least_as_good": 0.0
+  }
+}

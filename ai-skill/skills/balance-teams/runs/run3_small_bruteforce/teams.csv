@@ -1,0 +1,9 @@
+team,player_id,position,level,rating,strength
+1,A3,MB,4,,8.0
+1,A2,OH,4,,8.0
+1,A5,S,3,,6.0
+1,A8,OPP,1,,2.0
+2,A1,S,5,,10.0
+2,A4,OH,3,,6.0
+2,A6,MB,2,,4.0
+2,A7,L,2,,4.0

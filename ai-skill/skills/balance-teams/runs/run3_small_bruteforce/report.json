@@ -1,0 +1,52 @@
+{
+  "roster": "examples/small_8_players.csv",
+  "teams_requested": 2,
+  "seed": 115,
+  "n_players": 8,
+  "errors": [],
+  "warnings": [],
+  "status": "OK",
+  "teams": [
+    {
+      "team": 1,
+      "size": 4,
+      "mean_strength": 6.0,
+      "sum_strength": 24.0,
+      "setters": 1,
+      "players": [
+        "A3",
+        "A2",
+        "A5",
+        "A8"
+      ]
+    },
+    {
+      "team": 2,
+      "size": 4,
+      "mean_strength": 6.0,
+      "sum_strength": 24.0,
+      "setters": 1,
+      "players": [
+        "A4",
+        "A1",
+        "A6",
+        "A7"
+      ]
+    }
+  ],
+  "mean_gap": 0.0,
+  "objective": 0.0,
+  "teams_without_setter": 0,
+  "baseline_random": {
+    "reps": 2000,
+    "mean_gap_mean": 1.507,
+    "mean_gap_p05": 0.0,
+    "mean_gap_median": 1.0,
+    "share_random_at_least_as_good": 0.212
+  },
+  "bruteforce": {
+    "best_objective": 0.0,
+    "ours": 0.0,
+    "match": true
+  }
+}

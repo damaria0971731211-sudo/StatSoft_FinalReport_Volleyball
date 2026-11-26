@@ -1,0 +1,14 @@
+{
+  "roster": "examples/normal_roster.csv",
+  "teams_requested": 7,
+  "seed": 115,
+  "n_rows": 26,
+  "n_players": 26,
+  "errors": [
+    "報名 26 人不夠分成 7 隊（每隊至少 4 人，需 28 人）；可改成 6 隊"
+  ],
+  "warnings": [
+    "有 5 人沒有 rating，改用 level×2 換算，兩種尺度混用請留意"
+  ],
+  "status": "STOP"
+}

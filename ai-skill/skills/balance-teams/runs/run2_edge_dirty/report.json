@@ -1,0 +1,17 @@
+{
+  "roster": "examples/edge_dirty_roster.csv",
+  "teams_requested": 2,
+  "seed": 115,
+  "n_rows": 9,
+  "n_players": 8,
+  "errors": [
+    "第 5 列：player_id P02 與第 3 列重複",
+    "第 6 列（P05）：level 空白且沒有 rating",
+    "第 7 列（P06）：level=7 超出 1–5",
+    "第 8 列（P07）：level='三' 不是整數"
+  ],
+  "warnings": [
+    "第 9 列（P08）：position=SETTER 不認得，當作 ANY"
+  ],
+  "status": "STOP"
+}

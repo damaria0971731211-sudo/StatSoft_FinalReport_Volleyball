@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>野場排球分隊專題</title>
+  <meta name="description" content="115-1 程式設計與統計軟體期末專題：政大體育館排球野場的報名、程度分級與分隊，以模擬資料比較分隊方法是否讓比賽更勢均力敵。">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<!--
+  網站骨架說明（交件前刪除這段）
+  - 標示「待補」的地方是之後要放結果或連結的位置；搜尋 class="todo" 與 class="placeholder" 可找到全部。
+  - 一律使用相對路徑（例如 report/Gxx_Report.pdf），不要寫 C:\ 或 /Users/ 開頭的路徑。
+  - 組別代號尚未公布，先以 Gxx 表示，公布後全部取代。
+  - 若教師另行提供網頁樣版，把各區塊內容搬進樣版即可。
+-->
+
+<nav class="topnav" aria-label="頁面導覽">
+  <ul>
+    <li><a href="#summary">摘要</a></li>
+    <li><a href="#problem">問題</a></li>
+    <li><a href="#data">資料</a></li>
+    <li><a href="#methods">方法</a></li>
+    <li><a href="#demo">作品展示</a></li>
+    <li><a href="#results">結果</a></li>
+    <li><a href="#code">程式與重現</a></li>
+    <li><a href="#ai">AI 協作</a></li>
+    <li><a href="#media">報告與影片</a></li>
+    <li><a href="#team">分工與歷程</a></li>
+    <li><a href="#credits">公開與引用</a></li>
+  </ul>
+</nav>
+
+<header class="hero">
+  <div class="hero-inner">
+    <p class="group">Gxx · 115-1 程式設計與統計軟體 期末專題</p>
+    <h1>野場排球怎麼分隊才公平？<br>政大體育館晚餐場、消夜場的報名與分隊系統</h1>
+    <p class="lead">用比賽結果估計球員實力，再比較不同分隊方法能否讓每一局更勢均力敵。全部分析使用公開資料與模擬資料，不含真實球員個資。</p>
+    <div class="meta">
+      <span>作者：Iris<span class="todo">確認公開署名</span></span>
+      <span>版本：final-v1.0<span class="todo">待補</span></span>
+      <span>最後更新：2026-11-26</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- 01 專題摘要 -->
+  <section id="summary">
+    <h2><span class="num">01</span>專題摘要</h2>
+    <p class="section-desc">指引要求：組別、題目、使用者、痛點、方法、主要成果與限制，約 150 至 250 字。</p>
+    <div class="card">
+      <p>政大體育館的排球野場分為晚餐場與消夜場，每晚約有 4 到 6 隊、每隊 4 到 6 人輪流上場。目前多半是現場臨時湊隊，常出現強弱懸殊、一面倒的比賽，讓程度較弱的球員上場體驗不佳，強隊也打得不盡興。</p>
+      <p>本專題設計一套野場報名與分隊系統：報名時填寫自評程度，系統依過去比賽結果估計每位球員的實力，再自動分隊。我們以模擬資料比較三種分隊方法（隨機、依自評程度、依估計實力），以局分差與「分差在 3 分以內的比例」衡量比賽是否勢均力敵。</p>
+      <p><strong>主要成果：</strong><span class="todo">待補，填入模擬比較的關鍵數字與區間</span></p>
+      <p><strong>限制：</strong>沒有真實野場紀錄，實力模型與分隊效果都在模擬情境下驗證；職業比賽公開資料只用來設定模擬參數。</p>
+    </div>
+  </section>
+
+  <!-- 02 問題 -->
+  <section id="problem">
+    <h2><span class="num">02</span>問題與使用者</h2>
+    <p class="section-desc">從痛點收斂成一個可以用資料檢驗的問題。</p>
+    <div class="grid">
+      <div class="card">
+        <h3>使用者</h3>
+        <p>晚餐場、消夜場的野場參加者，以及負責排隊、分隊的召集人。</p>
+      </div>
+      <div class="card">
+        <h3>痛點</h3>
+        <p>臨時分隊強弱不均、比賽一面倒；常和同一批人同隊；新來的人不知道自己該排哪裡。</p>
+      </div>
+      <div class="card">
+        <h3>可檢驗的問題</h3>
+        <p>依比賽結果估計實力後分隊，是否比隨機分隊或依自評程度分隊，產生分差更小、更勢均力敵的比賽？</p>
+      </div>
+    </div>
+    <h3>成功指標<span class="todo">確認門檻</span></h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>指標</th><th>定義</th><th>比較對象</th><th>合理門檻</th></tr></thead>
+        <tbody>
+          <tr><td>平均局分差</td><td>每局兩隊得分差的平均，附 95% 區間</td><td>三種分隊方法，同一模擬情境</td><td>待補</td></tr>
+          <tr><td>接近比賽比例</td><td>分差 ≤ 3 分的局數比例</td><td>同上</td><td>待補</td></tr>
+          <tr><td>實力估計準確度</td><td>估計實力與模擬真實實力的相關、區間涵蓋率</td><td>不同比賽場數</td><td>涵蓋率接近 95%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 03 資料 -->
+  <section id="data">
+    <h2><span class="num">03</span>資料</h2>
+    <p class="section-desc">公開資料用來設定模擬參數，模擬資料用來驗證模型與比較分隊方法。</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>資料</th><th>來源與授權</th><th>用途</th><th>連結</th></tr></thead>
+        <tbody>
+          <tr><td>職業／大學排球比賽紀錄<span class="todo">確認資料集</span></td><td>待補（來源、下載日期、授權）</td><td>估計得分率、攻擊成功率等模擬參數</td><td><a href="docs/data_sources.md">資料來源說明</a></td></tr>
+          <tr><td>模擬野場資料</td><td>本專題自行生成，生成規則見程式</td><td>已知真實實力，用來驗證模型與比較分隊方法</td><td><a href="repro/README.md">生成方式</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>模擬情境</h3>
+    <ul>
+      <li>每晚 4 到 6 隊、每隊 4 到 6 人，分晚餐場與消夜場。</li>
+      <li>每位球員有一個隱藏的真實實力，自評程度帶有誤差。</li>
+      <li>至少兩種測試情境<span class="todo">待補，例如：人數多寡、新人比例高低</span></li>
+    </ul>
+    <p class="note">資料字典：<a href="docs/data_dictionary.md">docs/data_dictionary.md</a><span class="todo">待補</span></p>
+  </section>
+
+  <!-- 04 方法 -->
+  <section id="methods">
+    <h2><span class="num">04</span>方法</h2>
+    <p class="section-desc">R 負責實力評分模型，Python 負責報名、分隊與模擬比較。</p>
+    <div class="grid">
+      <div class="card">
+        <h3>R：實力評分模型</h3>
+        <p>以每局勝負與分差估計球員實力（Bradley-Terry／邏輯斯迴歸類型），加入收縮避免比賽少的球員估計過度極端；可延伸估計搭檔默契。</p>
+        <p class="note">輸入：每局名單與比分 CSV　輸出：球員實力估計與區間</p>
+      </div>
+      <div class="card">
+        <h3>Python：報名與分隊</h3>
+        <p>報名、程度分級，並實作三種分隊方法：隨機（基準）、依自評程度、依估計實力平衡總分。以大量重複模擬比較結果。</p>
+        <p class="note">輸入：報名名單與實力估計　輸出：分隊結果、模擬比賽紀錄</p>
+      </div>
+      <div class="card">
+        <h3>兩種語言如何銜接</h3>
+        <p>Python 產生模擬比賽 → R 讀入估計實力 → Python 讀回實力估計做分隊比較。檔案格式與欄位見 <a href="repro/README.md">重現說明</a>。</p>
+      </div>
+    </div>
+    <h3>流程圖</h3>
+    <figure>
+      <div class="placeholder">待補：資料流程圖（模擬 → 評分 → 分隊 → 比較）</div>
+      <figcaption>圖 1　系統與分析流程</figcaption>
+    </figure>
+  </section>
+
+  <!-- 05 作品展示 -->
+  <section id="demo">
+    <h2><span class="num">05</span>作品展示</h2>
+    <p class="section-desc">可操作的分隊原型與操作說明。</p>
+    <div class="grid">
+      <div class="card">
+        <h3>互動分隊工具<span class="todo">待補</span></h3>
+        <div class="placeholder">預計嵌入瀏覽器內執行的分隊原型（例如 Shinylive），或放固定示例截圖</div>
+      </div>
+      <div class="card">
+        <h3>操作說明</h3>
+        <ol>
+          <li>輸入今晚報名名單與自評程度。</li>
+          <li>選擇分隊方法與隊數。</li>
+          <li>查看分隊結果與各隊預估實力。</li>
+        </ol>
+        <p class="note">若互動版無法載入，請看 <a href="docs/demo_example.md">固定示例</a><span class="todo">待補</span>。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 結果 -->
+  <section id="results">
+    <h2><span class="num">06</span>結果</h2>
+    <p class="section-desc">呈現效果大小與不確定性，不只報平均值。</p>
+    <div class="grid">
+      <figure class="card">
+        <div class="placeholder">待補：三種分隊方法的局分差分布</div>
+        <figcaption>圖 2　不同分隊方法的局分差分布</figcaption>
+      </figure>
+      <figure class="card">
+        <div class="placeholder">待補：比賽場數與實力估計準確度／涵蓋率</div>
+        <figcaption>圖 3　實力估計隨比賽場數的變化</figcaption>
+      </figure>
+    </div>
+    <h3>比較摘要<span class="todo">待補數字</span></h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>分隊方法</th><th>平均局分差（95% 區間）</th><th>分差 ≤ 3 比例</th><th>備註</th></tr></thead>
+        <tbody>
+          <tr><td>隨機（基準）</td><td>—</td><td>—</td><td></td></tr>
+          <tr><td>依自評程度</td><td>—</td><td>—</td><td></td></tr>
+          <tr><td>依估計實力</td><td>—</td><td>—</td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>測試摘要<span class="todo">待補</span></h3>
+    <ul>
+      <li>已知答案測試：模擬實力已知，檢查估計是否還原。</li>
+      <li>邊界情境：只有 1 人報名、人數無法整除隊數、全員同程度。</li>
+      <li>完整測試紀錄：<a href="docs/tests.md">docs/tests.md</a></li>
+    </ul>
+    <h3>限制</h3>
+    <p>結果只在模擬情境下成立，實際野場的實力變化、出席不穩定、位置需求等因素未完全納入。</p>
+  </section>
+
+  <!-- 07 程式與重現 -->
+  <section id="code">
+    <h2><span class="num">07</span>程式與重現</h2>
+    <p class="section-desc">依 README 可從原始碼重跑主要結果。</p>
+    <ul class="links">
+      <li>GitHub repo：<a href="#">待補 repo 連結</a><span class="todo">待補</span></li>
+      <li>交件版本：tag <code>final-v1.0</code>，commit <code>待補</code></li>
+      <li>重現說明：<a href="repro/README.md">repro/README.md</a></li>
+      <li>環境設定：<code>renv.lock</code>（R）、<code>requirements.txt</code>（Python）</li>
+    </ul>
+  </section>
+
+  <!-- 08 AI 協作 -->
+  <section id="ai">
+    <h2><span class="num">08</span>AI 協作</h2>
+    <p class="section-desc">記錄想法如何形成、何時採納 AI 建議，以及如何驗證。</p>
+    <h3>Agent 工作流程</h3>
+    <ol class="flow">
+      <li>Define</li><li>Plan</li><li>Review</li><li>Code</li><li>Test</li><li>Reflect</li>
+    </ol>
+    <div class="grid">
+      <div class="card">
+        <h3>工具清單<span class="todo">待補</span></h3>
+        <p>工具、模型或版本、日期、用途、是否付費。</p>
+        <p><a href="docs/ai_disclosure.md">AI 使用揭露</a></p>
+      </div>
+      <div class="card">
+        <h3>AI skill<span class="todo">待補</span></h3>
+        <p>技能文件與兩次使用案例（含一個邊界案例）。</p>
+        <p><a href="docs/SKILL.md">SKILL.md</a></p>
+      </div>
+      <div class="card">
+        <h3>Vibe coding 紀錄<span class="todo">待補</span></h3>
+        <p>需求、生成版本、人工修改與測試前後差異。</p>
+        <p><a href="docs/vibe_coding.md">迭代紀錄</a></p>
+      </div>
+      <div class="card">
+        <h3>人工決策與修正<span class="todo">待補</span></h3>
+        <p>採納、修改或拒絕 AI 建議的理由，以及至少一次重要錯誤的查核與修正。</p>
+        <p><a href="docs/ai_log.html">去識別對話紀錄</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 09 報告與媒體 -->
+  <section id="media">
+    <h2><span class="num">09</span>報告、簡報與影片</h2>
+    <ul class="links">
+      <li>書面報告：<a href="report/Gxx_Report.pdf">PDF</a>　<a href="report/Gxx_Report.docx">Word</a><span class="todo">待補</span></li>
+      <li>簡報：<a href="slides/Gxx_Slides.pdf">PDF</a>　<a href="slides/Gxx_Slides.pptx">PPTX</a><span class="todo">待補</span></li>
+      <li>專題影片（5 至 7 分鐘）：<a href="#">雲端觀看連結</a><span class="todo">待補，用觀看連結</span></li>
+      <li>字幕與文字稿：<a href="media/Gxx_Video.srt">字幕</a>　<a href="media/Gxx_Transcript.txt">文字稿</a><span class="todo">待補</span></li>
+    </ul>
+  </section>
+
+  <!-- 10 分工與歷程 -->
+  <section id="team">
+    <h2><span class="num">10</span>分工與合作歷程</h2>
+    <p class="section-desc">1 人組以自我檢核與外部同學試跑補足交叉檢查。</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>成員</th><th>負責項目</th><th>對應成果</th><th>審查人</th></tr></thead>
+        <tbody>
+          <tr><td>Iris</td><td>全部項目</td><td>本網站所列成果</td><td>外部試跑同學<span class="todo">待補</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>歷程與決策紀錄<span class="todo">持續補充</span></h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>日期</th><th>方式</th><th>決定事項</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td>2026-11-26</td><td>與 AI 討論</td><td>題目定為野場排球報名與分隊；只用公開資料與模擬資料</td><td>無法取得真實野場紀錄，模擬資料可驗證已知答案</td></tr>
+          <tr><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">完整紀錄：<a href="docs/meetings.md">docs/meetings.md</a></p>
+  </section>
+
+  <!-- 11 公開與引用 -->
+  <section id="credits">
+    <h2><span class="num">11</span>公開與引用</h2>
+    <ul>
+      <li>引用來源與素材授權：<a href="docs/licenses.md">docs/licenses.md</a><span class="todo">待補</span></li>
+      <li>公開範圍：網站、程式與模擬資料公開；不含任何真實球員個資。</li>
+      <li>已知問題：<span class="todo">待補</span></li>
+      <li>檔案清單：<a href="Gxx_manifest.csv">Gxx_manifest.csv</a></li>
+    </ul>
+  </section>
+
+</main>
+
+<footer>
+  115-1 程式設計與統計軟體 期末專題 · 國立政治大學統計學系 · 最後更新 2026-11-26
+</footer>
+
+</body>
+</html>

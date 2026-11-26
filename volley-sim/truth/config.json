@@ -1,0 +1,83 @@
+{
+  "version": "1.0.0",
+  "generated_at": "2026-11-26T03:51:59",
+  "method_override": null,
+  "config": {
+    "seed": 20261126,
+    "start_date": "2026-09-14",
+    "weeks": 6,
+    "weekdays": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "sessions": {
+      "dinner": {
+        "start": "17:30",
+        "minutes": 120,
+        "courts": 1
+      },
+      "late": {
+        "start": "21:00",
+        "minutes": 120,
+        "courts": 1
+      }
+    },
+    "n_pool": 80,
+    "skill_sd": 1.0,
+    "attend_beta": [
+      2.0,
+      6.0
+    ],
+    "session_pref_late": 0.5,
+    "pref_strength": 0.75,
+    "turnout_min": 16,
+    "turnout_max": 36,
+    "team_size_target": 6,
+    "self_report_noise_sd": 0.6,
+    "self_report_bias": 0.3,
+    "level_cuts": [
+      -1.2,
+      -0.4,
+      0.4,
+      1.2
+    ],
+    "positions": {
+      "主攻": 0.3,
+      "副攻": 0.15,
+      "舉球": 0.15,
+      "接應": 0.1,
+      "自由": 0.08,
+      "不限": 0.22
+    },
+    "attack_weight": {
+      "主攻": 1.0,
+      "接應": 0.9,
+      "副攻": 0.7,
+      "不限": 0.6,
+      "舉球": 0.15,
+      "自由": 0.0
+    },
+    "chem_prob": 0.1,
+    "chem_sd": 0.4,
+    "p_ace": 0.141,
+    "p_serve_error": 0.141,
+    "p_kill": 0.29,
+    "p_attack_error": 0.071,
+    "p_blocked": 0.043,
+    "beta_skill": 0.4,
+    "missing_player_penalty": 0.15,
+    "seconds_per_rally": 29,
+    "seconds_between_games": 120,
+    "target_points": 25,
+    "short_target_points": 15,
+    "point_cap": 30,
+    "winner_stay_max": 2,
+    "history_methods": {
+      "self_level": 0.6,
+      "random": 0.4
+    }
+  },
+  "note": "合成資料（simulated data），非真實野場紀錄。"
+}

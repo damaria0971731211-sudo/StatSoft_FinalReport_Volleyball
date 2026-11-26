@@ -1,0 +1,48 @@
+--- /tmp/claude-0/-home-user/ff8f0ff8-cb46-5888-ad5c-4f65a5f4f49f/scratchpad/balance_teams_v1.py	2026-11-26 03:50:52.925911825 +0000
++++ scripts/balance_teams.py	2026-11-26 03:50:52.943660393 +0000
+@@ -36,13 +36,13 @@
+             cols = [c.strip() for c in (reader.fieldnames or [])]
+             rows = list(reader)
+     except FileNotFoundError:
+-        return [], [f"找不到名單檔：{path}"], []
++        return [], [f"找不到名單檔：{path}"], [], 0
+ 
+     for need in ("player_id", "level", "position"):
+         if need not in cols:
+             errors.append(f"缺少必要欄位 {need}（目前欄位：{', '.join(cols) or '無'}）")
+     if errors:
+-        return [], errors, warnings
++        return [], errors, warnings, len(rows)
+     has_rating = "rating" in cols
+ 
+     seen = {}
+@@ -105,7 +105,7 @@
+     n_setters = sum(p["position"] == "S" for p in players)
+     if not errors and n_setters < n_teams:
+         warnings.append(f"舉球員只有 {n_setters} 位，少於隊數 {n_teams}，有隊伍會沒有舉球員")
+-    return players, errors, warnings
++    return players, errors, warnings, n
+ 
+ 
+ # ---------------------------------------------------------------- 分隊
+@@ -202,9 +202,9 @@
+ 
+     out = Path(args.out)
+     out.mkdir(parents=True, exist_ok=True)
+-    players, errors, warnings = load_and_validate(args.roster, args.teams, args.min_size, args.max_size)
++    players, errors, warnings, n_rows = load_and_validate(args.roster, args.teams, args.min_size, args.max_size)
+     report = {"roster": str(args.roster), "teams_requested": args.teams, "seed": args.seed,
+-              "n_players": len(players), "errors": errors, "warnings": warnings}
++              "n_rows": n_rows, "n_players": len(players), "errors": errors, "warnings": warnings}
+ 
+     if errors:
+         report["status"] = "STOP"
+@@ -265,7 +265,7 @@
+ 
+ def write_md(out, r):
+     L = [f"# 分隊報告：{r['status']}", "",
+-         f"- 名單：`{r['roster']}`，{r['n_players']} 人，要求 {r['teams_requested']} 隊，seed={r['seed']}"]
++         f"- 名單：`{r['roster']}`，資料 {r['n_rows']} 列，通過 ID 檢查 {r['n_players']} 人，要求 {r['teams_requested']} 隊，seed={r['seed']}"]
+     if r["errors"]:
+         L += ["", "## 錯誤（已停止，未產生分隊）", *[f"- {e}" for e in r["errors"]]]
+     if r["warnings"]:
