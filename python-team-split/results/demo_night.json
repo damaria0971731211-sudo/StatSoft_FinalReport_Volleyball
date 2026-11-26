@@ -1,0 +1,743 @@
+{
+ "seed": 1,
+ "players": [
+  {
+   "code": "P01",
+   "self_level": 5,
+   "level_name": "校隊級",
+   "position": "舉球",
+   "rating": 1.666,
+   "n_games": 24,
+   "tier": "A",
+   "true_skill": 1.288
+  },
+  {
+   "code": "P02",
+   "self_level": 4,
+   "level_name": "中高階",
+   "position": "舉球",
+   "rating": 1.228,
+   "n_games": 6,
+   "tier": "A",
+   "true_skill": 1.142
+  },
+  {
+   "code": "P03",
+   "self_level": 5,
+   "level_name": "校隊級",
+   "position": "自由",
+   "rating": 1.935,
+   "n_games": 13,
+   "tier": "A",
+   "true_skill": 1.871
+  },
+  {
+   "code": "P04",
+   "self_level": 1,
+   "level_name": "新手",
+   "position": "不限",
+   "rating": -0.923,
+   "n_games": 18,
+   "tier": "C",
+   "true_skill": -1.534
+  },
+  {
+   "code": "P05",
+   "self_level": 3,
+   "level_name": "中階",
+   "position": "自由",
+   "rating": 1.852,
+   "n_games": 0,
+   "tier": "B",
+   "true_skill": 0.203
+  },
+  {
+   "code": "P06",
+   "self_level": 3,
+   "level_name": "中階",
+   "position": "舉球",
+   "rating": -0.629,
+   "n_games": 23,
+   "tier": "B",
+   "true_skill": 0.119
+  },
+  {
+   "code": "P07",
+   "self_level": 4,
+   "level_name": "中高階",
+   "position": "攻擊",
+   "rating": -0.122,
+   "n_games": 15,
+   "tier": "B",
+   "true_skill": 0.19
+  },
+  {
+   "code": "P08",
+   "self_level": 5,
+   "level_name": "校隊級",
+   "position": "舉球",
+   "rating": 0.554,
+   "n_games": 29,
+   "tier": "A",
+   "true_skill": 1.239
+  },
+  {
+   "code": "P09",
+   "self_level": 3,
+   "level_name": "中階",
+   "position": "舉球",
+   "rating": 0.307,
+   "n_games": 20,
+   "tier": "B",
+   "true_skill": 0.667
+  },
+  {
+   "code": "P10",
+   "self_level": 1,
+   "level_name": "新手",
+   "position": "不限",
+   "rating": -0.718,
+   "n_games": 28,
+   "tier": "C",
+   "true_skill": -1.165
+  },
+  {
+   "code": "P11",
+   "self_level": 1,
+   "level_name": "新手",
+   "position": "攻擊",
+   "rating": -0.354,
+   "n_games": 13,
+   "tier": "C",
+   "true_skill": -0.567
+  },
+  {
+   "code": "P12",
+   "self_level": 2,
+   "level_name": "初階",
+   "position": "不限",
+   "rating": 0.619,
+   "n_games": 15,
+   "tier": "B",
+   "true_skill": -0.347
+  },
+  {
+   "code": "P13",
+   "self_level": 2,
+   "level_name": "初階",
+   "position": "攻擊",
+   "rating": -1.361,
+   "n_games": 1,
+   "tier": "C",
+   "true_skill": -1.333
+  },
+  {
+   "code": "P14",
+   "self_level": 2,
+   "level_name": "初階",
+   "position": "自由",
+   "rating": -1.25,
+   "n_games": 28,
+   "tier": "C",
+   "true_skill": -1.017
+  },
+  {
+   "code": "P15",
+   "self_level": 2,
+   "level_name": "初階",
+   "position": "自由",
+   "rating": -0.267,
+   "n_games": 14,
+   "tier": "B",
+   "true_skill": -0.443
+  },
+  {
+   "code": "P16",
+   "self_level": 4,
+   "level_name": "中高階",
+   "position": "舉球",
+   "rating": 0.125,
+   "n_games": 23,
+   "tier": "A",
+   "true_skill": 0.375
+  },
+  {
+   "code": "P17",
+   "self_level": 5,
+   "level_name": "校隊級",
+   "position": "攻擊",
+   "rating": 1.341,
+   "n_games": 19,
+   "tier": "A",
+   "true_skill": 1.501
+  },
+  {
+   "code": "P18",
+   "self_level": 1,
+   "level_name": "新手",
+   "position": "攻擊",
+   "rating": 0.367,
+   "n_games": 24,
+   "tier": "B",
+   "true_skill": 0.379
+  },
+  {
+   "code": "P19",
+   "self_level": 4,
+   "level_name": "中高階",
+   "position": "攻擊",
+   "rating": 1.607,
+   "n_games": 12,
+   "tier": "A",
+   "true_skill": 1.105
+  },
+  {
+   "code": "P20",
+   "self_level": 2,
+   "level_name": "初階",
+   "position": "自由",
+   "rating": -0.316,
+   "n_games": 17,
+   "tier": "B",
+   "true_skill": -0.386
+  },
+  {
+   "code": "P21",
+   "self_level": 2,
+   "level_name": "初階",
+   "position": "不限",
+   "rating": 0.229,
+   "n_games": 27,
+   "tier": "B",
+   "true_skill": -0.127
+  },
+  {
+   "code": "P22",
+   "self_level": 2,
+   "level_name": "初階",
+   "position": "攻擊",
+   "rating": -1.471,
+   "n_games": 17,
+   "tier": "C",
+   "true_skill": -1.077
+  },
+  {
+   "code": "P23",
+   "self_level": 4,
+   "level_name": "中高階",
+   "position": "攻擊",
+   "rating": 1.241,
+   "n_games": 11,
+   "tier": "A",
+   "true_skill": 1.089
+  },
+  {
+   "code": "P24",
+   "self_level": 4,
+   "level_name": "中高階",
+   "position": "舉球",
+   "rating": 1.164,
+   "n_games": 11,
+   "tier": "A",
+   "true_skill": 1.127
+  },
+  {
+   "code": "P25",
+   "self_level": 1,
+   "level_name": "新手",
+   "position": "攻擊",
+   "rating": -1.398,
+   "n_games": 10,
+   "tier": "C",
+   "true_skill": -1.702
+  },
+  {
+   "code": "P26",
+   "self_level": 4,
+   "level_name": "中高階",
+   "position": "舉球",
+   "rating": 0.468,
+   "n_games": 27,
+   "tier": "A",
+   "true_skill": 0.126
+  },
+  {
+   "code": "P27",
+   "self_level": 1,
+   "level_name": "新手",
+   "position": "攻擊",
+   "rating": -1.626,
+   "n_games": 29,
+   "tier": "C",
+   "true_skill": -1.853
+  },
+  {
+   "code": "P28",
+   "self_level": 2,
+   "level_name": "初階",
+   "position": "不限",
+   "rating": -1.18,
+   "n_games": 0,
+   "tier": "C",
+   "true_skill": -1.254
+  }
+ ],
+ "methods": {
+  "隨機": {
+   "teams": [
+    {
+     "team": "第1隊",
+     "members": [
+      "P04",
+      "P21",
+      "P18",
+      "P16",
+      "P01",
+      "P25"
+     ],
+     "size": 6,
+     "setters": 2,
+     "mean_self_level": 2.33,
+     "strength_est": -0.142,
+     "strength_self": -0.556
+    },
+    {
+     "team": "第2隊",
+     "members": [
+      "P05",
+      "P08",
+      "P15",
+      "P17",
+      "P20",
+      "P24"
+     ],
+     "size": 6,
+     "setters": 2,
+     "mean_self_level": 3.5,
+     "strength_est": 0.384,
+     "strength_self": 0.417
+    },
+    {
+     "team": "第3隊",
+     "members": [
+      "P13",
+      "P19",
+      "P11",
+      "P14",
+      "P23",
+      "P27"
+     ],
+     "size": 6,
+     "setters": 0,
+     "mean_self_level": 2.33,
+     "strength_est": -0.362,
+     "strength_self": -0.556
+    },
+    {
+     "team": "第4隊",
+     "members": [
+      "P07",
+      "P09",
+      "P10",
+      "P22",
+      "P06"
+     ],
+     "size": 5,
+     "setters": 2,
+     "mean_self_level": 2.6,
+     "strength_est": -0.597,
+     "strength_self": -0.483
+    },
+    {
+     "team": "第5隊",
+     "members": [
+      "P12",
+      "P26",
+      "P03",
+      "P02",
+      "P28"
+     ],
+     "size": 5,
+     "setters": 2,
+     "mean_self_level": 3.4,
+     "strength_est": 0.383,
+     "strength_self": 0.183
+    }
+   ],
+   "games": [
+    {
+     "court": 1,
+     "start_min": 0.0,
+     "target": 15,
+     "A": 0,
+     "B": 2,
+     "score_A": 12,
+     "score_B": 15
+    },
+    {
+     "court": 1,
+     "start_min": 13.1,
+     "target": 15,
+     "A": 2,
+     "B": 3,
+     "score_A": 9,
+     "score_B": 15
+    },
+    {
+     "court": 1,
+     "start_min": 24.6,
+     "target": 15,
+     "A": 3,
+     "B": 4,
+     "score_A": 11,
+     "score_B": 15
+    },
+    {
+     "court": 1,
+     "start_min": 37.2,
+     "target": 15,
+     "A": 4,
+     "B": 1,
+     "score_A": 9,
+     "score_B": 15
+    },
+    {
+     "court": 1,
+     "start_min": 48.8,
+     "target": 15,
+     "A": 1,
+     "B": 0,
+     "score_A": 15,
+     "score_B": 8
+    },
+    {
+     "court": 1,
+     "start_min": 59.9,
+     "target": 15,
+     "A": 2,
+     "B": 3,
+     "score_A": 15,
+     "score_B": 9
+    },
+    {
+     "court": 1,
+     "start_min": 71.5,
+     "target": 15,
+     "A": 2,
+     "B": 4,
+     "score_A": 15,
+     "score_B": 13
+    }
+   ],
+   "metrics": {
+    "mean_margin": 4.857142857142857,
+    "close_rate": 0.2857142857142857,
+    "blowout_rate": 0.0,
+    "strength_spread": 0.9695006458999011,
+    "games_sd": 0.7726181304565691,
+    "games_gap": 2
+   }
+  },
+  "自報程度蛇形": {
+   "teams": [
+    {
+     "team": "第1隊",
+     "members": [
+      "P01",
+      "P26",
+      "P02",
+      "P22",
+      "P12",
+      "P10"
+     ],
+     "size": 6,
+     "setters": 3,
+     "mean_self_level": 3.0,
+     "strength_est": 0.19,
+     "strength_self": 0.0
+    },
+    {
+     "team": "第2隊",
+     "members": [
+      "P08",
+      "P07",
+      "P05",
+      "P14",
+      "P28",
+      "P27"
+     ],
+     "size": 6,
+     "setters": 1,
+     "mean_self_level": 2.83,
+     "strength_est": -0.437,
+     "strength_self": -0.139
+    },
+    {
+     "team": "第3隊",
+     "members": [
+      "P17",
+      "P23",
+      "P09",
+      "P13",
+      "P04",
+      "P11"
+     ],
+     "size": 6,
+     "setters": 1,
+     "mean_self_level": 2.67,
+     "strength_est": -0.029,
+     "strength_self": -0.278
+    },
+    {
+     "team": "第4隊",
+     "members": [
+      "P03",
+      "P19",
+      "P06",
+      "P20",
+      "P18"
+     ],
+     "size": 5,
+     "setters": 1,
+     "mean_self_level": 3.0,
+     "strength_est": 0.258,
+     "strength_self": -0.15
+    },
+    {
+     "team": "第5隊",
+     "members": [
+      "P16",
+      "P24",
+      "P21",
+      "P15",
+      "P25"
+     ],
+     "size": 5,
+     "setters": 2,
+     "mean_self_level": 2.6,
+     "strength_est": -0.284,
+     "strength_self": -0.483
+    }
+   ],
+   "games": [
+    {
+     "court": 1,
+     "start_min": 0.0,
+     "target": 15,
+     "A": 0,
+     "B": 2,
+     "score_A": 11,
+     "score_B": 15
+    },
+    {
+     "court": 1,
+     "start_min": 12.6,
+     "target": 15,
+     "A": 2,
+     "B": 3,
+     "score_A": 8,
+     "score_B": 15
+    },
+    {
+     "court": 1,
+     "start_min": 23.7,
+     "target": 15,
+     "A": 3,
+     "B": 4,
+     "score_A": 13,
+     "score_B": 15
+    },
+    {
+     "court": 1,
+     "start_min": 37.2,
+     "target": 15,
+     "A": 4,
+     "B": 1,
+     "score_A": 15,
+     "score_B": 17
+    },
+    {
+     "court": 1,
+     "start_min": 52.7,
+     "target": 15,
+     "A": 1,
+     "B": 0,
+     "score_A": 19,
+     "score_B": 17
+    },
+    {
+     "court": 1,
+     "start_min": 70.1,
+     "target": 15,
+     "A": 2,
+     "B": 3,
+     "score_A": 16,
+     "score_B": 14
+    }
+   ],
+   "metrics": {
+    "mean_margin": 3.1666666666666665,
+    "close_rate": 0.6666666666666666,
+    "blowout_rate": 0.0,
+    "strength_spread": 0.8827340465900997,
+    "games_sd": 0.48838551182776224,
+    "games_gap": 1
+   }
+  },
+  "評分最佳化": {
+   "teams": [
+    {
+     "team": "第1隊",
+     "members": [
+      "P03",
+      "P16",
+      "P09",
+      "P28",
+      "P11",
+      "P04"
+     ],
+     "size": 6,
+     "setters": 2,
+     "mean_self_level": 2.67,
+     "strength_est": -0.08,
+     "strength_self": -0.278
+    },
+    {
+     "team": "第2隊",
+     "members": [
+      "P01",
+      "P26",
+      "P07",
+      "P06",
+      "P13",
+      "P25"
+     ],
+     "size": 6,
+     "setters": 3,
+     "mean_self_level": 3.17,
+     "strength_est": -0.075,
+     "strength_self": 0.139
+    },
+    {
+     "team": "第3隊",
+     "members": [
+      "P17",
+      "P08",
+      "P12",
+      "P20",
+      "P10",
+      "P22"
+     ],
+     "size": 6,
+     "setters": 1,
+     "mean_self_level": 2.83,
+     "strength_est": -0.055,
+     "strength_self": -0.139
+    },
+    {
+     "team": "第4隊",
+     "members": [
+      "P23",
+      "P24",
+      "P05",
+      "P15",
+      "P14"
+     ],
+     "size": 5,
+     "setters": 1,
+     "mean_self_level": 3.0,
+     "strength_est": -0.057,
+     "strength_self": -0.15
+    },
+    {
+     "team": "第5隊",
+     "members": [
+      "P19",
+      "P02",
+      "P21",
+      "P18",
+      "P27"
+     ],
+     "size": 5,
+     "setters": 1,
+     "mean_self_level": 2.4,
+     "strength_est": -0.048,
+     "strength_self": -0.65
+    }
+   ],
+   "games": [
+    {
+     "court": 1,
+     "start_min": 0.0,
+     "target": 15,
+     "A": 0,
+     "B": 2,
+     "score_A": 11,
+     "score_B": 15
+    },
+    {
+     "court": 1,
+     "start_min": 12.6,
+     "target": 15,
+     "A": 2,
+     "B": 3,
+     "score_A": 9,
+     "score_B": 15
+    },
+    {
+     "court": 1,
+     "start_min": 24.2,
+     "target": 15,
+     "A": 3,
+     "B": 4,
+     "score_A": 10,
+     "score_B": 15
+    },
+    {
+     "court": 1,
+     "start_min": 36.2,
+     "target": 15,
+     "A": 4,
+     "B": 1,
+     "score_A": 15,
+     "score_B": 13
+    },
+    {
+     "court": 1,
+     "start_min": 49.8,
+     "target": 15,
+     "A": 0,
+     "B": 2,
+     "score_A": 16,
+     "score_B": 14
+    },
+    {
+     "court": 1,
+     "start_min": 64.3,
+     "target": 15,
+     "A": 0,
+     "B": 3,
+     "score_A": 15,
+     "score_B": 10
+    },
+    {
+     "court": 1,
+     "start_min": 76.4,
+     "target": 15,
+     "A": 1,
+     "B": 4,
+     "score_A": 15,
+     "score_B": 8
+    }
+   ],
+   "metrics": {
+    "mean_margin": 4.428571428571429,
+    "close_rate": 0.2857142857142857,
+    "blowout_rate": 0.0,
+    "strength_spread": 0.26026531609687004,
+    "games_sd": 0.41032590332414487,
+    "games_gap": 1
+   }
+  }
+ }
+}

@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "generated_at": "2026-11-26T03:51:59",
+  "generated_at": "2026-11-26T04:00:44",
   "method_override": null,
   "config": {
     "seed": 20261126,
@@ -14,13 +14,13 @@
     ],
     "sessions": {
       "dinner": {
-        "start": "17:30",
-        "minutes": 120,
+        "start": "18:00",
+        "minutes": 90,
         "courts": 1
       },
       "late": {
-        "start": "21:00",
-        "minutes": 120,
+        "start": "22:00",
+        "minutes": 90,
         "courts": 1
       }
     },
@@ -70,9 +70,16 @@
     "missing_player_penalty": 0.15,
     "seconds_per_rally": 29,
     "seconds_between_games": 120,
-    "target_points": 25,
+    "target_by_teams": {
+      "2": 20,
+      "3": 20,
+      "4": 20,
+      "5": 15,
+      "6": 15
+    },
+    "target_points": 20,
     "short_target_points": 15,
-    "point_cap": 30,
+    "point_cap": 25,
     "winner_stay_max": 2,
     "history_methods": {
       "self_level": 0.6,

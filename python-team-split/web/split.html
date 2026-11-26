@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>野場分隊試用</title>
+<style>
+:root { --bg:#fafaf8; --fg:#1d1d1b; --muted:#6b6b66; --line:#ddd9d0; --card:#fff; --accent:#c2410c; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#171716; --fg:#ecebe6; --muted:#a3a29b; --line:#3a3936; --card:#21201e; --accent:#fb923c; } }
+:root[data-theme="dark"] { --bg:#171716; --fg:#ecebe6; --muted:#a3a29b; --line:#3a3936; --card:#21201e; --accent:#fb923c; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.6 system-ui,"Noto Sans TC","PingFang TC",sans-serif; }
+main { max-width:960px; margin:0 auto; padding:24px 16px 48px; }
+h1 { font-size:1.6rem; margin:0 0 4px; }
+p.lead { color:var(--muted); margin:0 0 20px; }
+textarea { width:100%; height:200px; font:13px/1.4 ui-monospace,monospace; background:var(--card); color:var(--fg); border:1px solid var(--line); border-radius:8px; padding:10px; }
+.row { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin:12px 0; }
+select, button, input { font:inherit; padding:6px 10px; border-radius:6px; border:1px solid var(--line); background:var(--card); color:var(--fg); }
+button { background:var(--accent); color:#fff; border:none; cursor:pointer; }
+button:disabled { opacity:.5; cursor:wait; }
+.teams { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
+.team { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; }
+.team h3 { margin:0 0 4px; font-size:1.05rem; }
+.team .meta { color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+.team ul { margin:0; padding-left:1.1em; }
+#status { color:var(--muted); font-size:.9rem; }
+pre { white-space:pre-wrap; color:var(--muted); }
+</style>
+</head>
+<body>
+<main>
+<h1>野場分隊試用</h1>
+<p class="lead">在瀏覽器裡直接跑 Python 分隊程式（Pyodide）。名單只用代號。欄位：code,self_level(1~5),session,position(舉球/攻擊/自由/不限)[,rating,n_games]</p>
+<textarea id="csv"></textarea>
+<div class="row">
+  <label>場次 <select id="session"><option>晚餐場</option><option>消夜場</option></select></label>
+  <label>方法 <select id="method"><option value="balanced">評分最佳化</option><option value="snake">自報程度蛇形</option><option value="random">隨機</option></select></label>
+  <label>隊數 <input id="teams" type="number" min="2" max="6" placeholder="自動" style="width:5em"></label>
+  <label>亂數種子 <input id="seed" type="number" value="1" style="width:5em"></label>
+  <button id="go" disabled>分隊</button>
+  <span id="status">載入 Python 中…</span>
+</div>
+<div id="out" class="teams"></div>
+<pre id="err"></pre>
+</main>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+<script>
+// 範例名單：網站部署時把 volleysplit/ 與 data/ 放在這個頁面的上一層
+const BASE = new URL("../", location.href);
+const FILES = ["__init__.py", "registration.py", "teaming.py", "simulate.py"];
+let py;
+async function boot() {
+  try {
+    const sample = await fetch(new URL("data/sample_signups.csv", BASE)).then(r => r.ok ? r.text() : "");
+    document.getElementById("csv").value = sample;
+  } catch (e) {}
+  py = await loadPyodide();
+  py.FS.mkdirTree("/app/volleysplit");
+  for (const f of FILES) {
+    const src = await fetch(new URL("volleysplit/" + f, BASE)).then(r => r.text());
+    py.FS.writeFile("/app/volleysplit/" + f, src);
+  }
+  py.runPython("import sys; sys.path.insert(0, '/app')");
+  document.getElementById("go").disabled = false;
+  document.getElementById("status").textContent = "Python 已就緒";
+}
+const runner = `
+import csv, io, json, random
+from volleysplit.registration import Player, Registry
+from volleysplit.teaming import METHODS, METHOD_KEYS, choose_n_teams, describe
+def run(text, session, method, n_teams, seed):
+    reg = Registry(session, capacity=36)
+    for row in csv.DictReader(io.StringIO(text.strip())):
+        if (row.get("session") or "晚餐場").strip() != session: continue
+        r = row.get("rating") or None
+        reg.sign_up(Player(row["code"].strip(), int(row["self_level"]), session,
+                           (row.get("position") or "不限").strip(),
+                           float(r) if r else None, int(row.get("n_games") or 0)))
+    k = int(n_teams) if n_teams else choose_n_teams(len(reg.confirmed))
+    teams = METHODS[METHOD_KEYS[method]](reg.confirmed, k, random.Random(int(seed)))
+    return json.dumps({"teams": describe(teams), "waitlist": [p.code for p in reg.waitlist]}, ensure_ascii=False)
+`;
+document.getElementById("go").onclick = () => {
+  const err = document.getElementById("err"); err.textContent = "";
+  try {
+    py.runPython(runner);
+    const res = JSON.parse(py.globals.get("run")(
+      document.getElementById("csv").value, document.getElementById("session").value,
+      document.getElementById("method").value, document.getElementById("teams").value,
+      document.getElementById("seed").value || 1));
+    const out = document.getElementById("out"); out.innerHTML = "";
+    for (const t of res.teams) {
+      const d = document.createElement("div"); d.className = "team";
+      d.innerHTML = `<h3></h3><div class="meta"></div><ul></ul>`;
+      d.querySelector("h3").textContent = t.team;
+      d.querySelector(".meta").textContent = `${t.size} 人｜舉球 ${t.setters}｜自報平均 ${t.mean_self_level}｜估計強度 ${t.strength_est >= 0 ? "+" : ""}${t.strength_est}`;
+      for (const m of t.members) { const li = document.createElement("li"); li.textContent = m; d.querySelector("ul").appendChild(li); }
+      out.appendChild(d);
+    }
+    if (res.waitlist.length) err.textContent = "候補：" + res.waitlist.join("、");
+  } catch (e) { err.textContent = String(e.message || e).split("\n").slice(-2).join("\n"); }
+};
+boot().catch(e => { document.getElementById("status").textContent = "載入失敗：" + e; });
+</script>
+</body>
+</html>

@@ -48,8 +48,8 @@ DEFAULT_CONFIG = {
     "weeks": 6,                          # 假設
     "weekdays": [0, 1, 2, 3],            # 週一到週四（0=週一）；假設
     "sessions": {                        # 假設：時段長度與可用場地
-        "dinner": {"start": "17:30", "minutes": 120, "courts": 1},
-        "late":   {"start": "21:00", "minutes": 120, "courts": 1},
+        "dinner": {"start": "18:00", "minutes": 90, "courts": 1},   # Iris 確認：18:00–19:30
+        "late":   {"start": "22:00", "minutes": 90, "courts": 1},   # Iris 確認：22:00–23:30
     },
     # ---- 球員母體 ----
     "n_pool": 80,                        # 假設：常來野場的人數
@@ -80,9 +80,11 @@ DEFAULT_CONFIG = {
     "seconds_per_rally": 29,             # datavolley：相鄰兩分間隔中位數（秒）
     "seconds_between_games": 120,        # 假設：換隊、熱身
     # ---- 賽制 ----
-    "target_points": 25,                 # 假設：野場打 25 分、需領先 2 分
-    "short_target_points": 15,           # 假設：剩餘時間不夠打 25 分時改打 15 分
-    "point_cap": 30,                     # 假設：打到 30 分強制結束（避免無限 deuce）
+    # Iris 確認：依隊伍數量打 15 或 20 分。哪個隊數打幾分是假設：隊多→打短一點讓大家輪得到
+    "target_by_teams": {"2": 20, "3": 20, "4": 20, "5": 15, "6": 15},
+    "target_points": 20,                 # 未對應到隊數時的預設
+    "short_target_points": 15,           # 假設：剩餘時間不夠打完整局時改打 15 分
+    "point_cap": 25,                     # 假設：deuce 打到 25 分強制結束
     "winner_stay_max": 2,                # 假設：贏球最多連續留場 2 局
     # ---- 分隊方法（歷史資料中每晚怎麼分隊） ----
     "history_methods": {"self_level": 0.6, "random": 0.4},  # 假設：多數靠自報程度，部分隨機
@@ -244,7 +246,7 @@ def simulate_rally(serving, receiving, server, S, pool, cfg, rng, stats):
 def simulate_game(team_a, team_b, pool, chem, cfg, rng, target=None):
     """模擬一局。回傳 dict：score_a, score_b, rallies, stats（每位球員的攻擊／發球統計）。"""
     target = target or cfg["target_points"]
-    cap = max(cfg["point_cap"], target + 5)
+    cap = max(cfg["point_cap"], target + 2)
     S = {"A": team_strength(team_a, pool, chem, cfg), "B": team_strength(team_b, pool, chem, cfg)}
     ids = {"A": list(team_a), "B": list(team_b)}
     stats = _new_stats(ids["A"] + ids["B"])
@@ -274,6 +276,7 @@ def simulate_game(team_a, team_b, pool, chem, cfg, rng, target=None):
 def simulate_session(date, session, present, pool, chem, cfg, rng, method):
     scfg = cfg["sessions"][session]
     k = n_teams_for(len(present), cfg)
+    night_target = int(cfg["target_by_teams"].get(str(k), cfg["target_points"]))
     team_lists = form_teams(present, k, method, pool, rng)
     names = [chr(ord("A") + i) for i in range(k)]
     teams = dict(zip(names, team_lists))
@@ -293,10 +296,10 @@ def simulate_session(date, session, present, pool, chem, cfg, rng, method):
         t = t0
         while True:
             remaining = (t_end - t).total_seconds()
-            full_need = (cfg["target_points"] * 1.8) * sec
+            full_need = (night_target * 1.8) * sec
             short_need = (cfg["short_target_points"] * 1.8) * sec
             if remaining >= full_need:
-                target = cfg["target_points"]
+                target = night_target
             elif remaining >= short_need:
                 target = cfg["short_target_points"]
             else:
@@ -404,8 +407,8 @@ def summarize(out: dict) -> str:
     lines = [
         f"時段數 {g['session_id'].nunique()}，局數 {len(g)}，球員出現 {out['game_players']['player_id'].nunique()} 人",
         f"每時段局數 平均 {g.groupby('session_id').size().mean():.1f}",
-        f"25 分局平均分差 {g.loc[g.target_points == 25, 'margin'].mean():.2f}，分差≤3 比例 "
-        f"{(g.loc[g.target_points == 25, 'margin'] <= 3).mean():.2f}",
+        f"局數依目標分數 {g.target_points.value_counts().to_dict()}",
+        f"平均分差 {g['margin'].mean():.2f}，分差≤3 比例 {(g['margin'] <= 3).mean():.2f}",
         f"攻擊得分率 {a['kills'] / a['attempts']:.3f}，失誤 {a['errors'] / a['attempts']:.3f}，"
         f"被攔 {a['blocked'] / a['attempts']:.3f}",
         f"發球得分率 {a['aces'] / a['serves']:.3f}，發球失誤 {a['serve_errors'] / a['serves']:.3f}",
