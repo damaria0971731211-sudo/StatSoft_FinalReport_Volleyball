@@ -14,7 +14,13 @@ StatSoft 期末專題的 **R 實質任務**：從「每局兩隊名單＋比分�
 | `analysis/01_bundesliga.R` | 公開資料：德甲排球 6,330 局比分的樣本外預測驗證 |
 | `analysis/02_simulation_study.R` | 模擬研究：估回真值、涵蓋率、需要幾晚資料、敏感度 |
 | `analysis/03_volley_sim.R` | 套用到 Python 模擬資料，輸出 `output/ratings_volley_sim.csv` |
-| `report.Rmd` / `report.html` | 繁中報告（含圖） |
+| `report.Rmd` / `report.html` | 單館版繁中報告（含圖） |
+| `R/platform_model.R` | 跨球館版：球館隨機效果的階層模型 `fit_platform_model()`、每局線上更新 `online_update()` / `online_run()` |
+| `R/simulate_platform.R`、`R/read_platform_sim.R` | 多球館模擬、讀取 Python 跨球館模擬資料 |
+| `analysis/04_platform_venues.R` | 橋接球員比例 vs 跨館比較能力；線上 vs 批次 |
+| `analysis/05_cold_start.R` | 冷啟動：新人區間收斂、自報錯誤修正速度 |
+| `analysis/06_platform_python.R` | 套用 Python 跨球館資料；自報偏誤 Bland-Altman 與誤差迴歸 |
+| `platform_report.Rmd` / `platform_report.html` | 平台版繁中報告 |
 | `figures/` | 報告用圖（PNG） |
 | `data/public/` | 公開資料（CC0，見下方） |
 | `results/` | 各分析的結果（.rds） |
@@ -41,6 +47,12 @@ Rscript analysis/01_bundesliga.R
 R_REPS=200 Rscript analysis/02_simulation_study.R  # 4 核心約 25 分鐘
 VOLLEY_SIM_DIR=/mnt/project-files/volley-sim Rscript analysis/03_volley_sim.R
 Rscript -e 'rmarkdown::render("report.Rmd")'
+# 平台版
+R_REPS=100 Rscript analysis/04_platform_venues.R   # 約 7 分鐘
+N_NEW=400 Rscript analysis/05_cold_start.R          # 約 20 秒
+# 06 需要 Python 跨館資料：python platform_sim.py --cross 0 / 0.3 --out ...，路徑用 PLAT_CROSS0 / PLAT_CROSS10 / PLAT_CROSS30 指定
+Rscript analysis/06_platform_python.R
+Rscript -e 'rmarkdown::render("platform_report.Rmd")'
 ```
 
 需要 R ≥ 4.1 與套件 `Matrix`、`ggplot2`、`rmarkdown`、`knitr`；圖中文字型為 WenQuanYi Zen Hei（其他系統可在 `report.Rmd` 開頭改 `FONT`）。`sessionInfo.txt` 記錄了開發時的版本。

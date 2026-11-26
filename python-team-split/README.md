@@ -14,20 +14,23 @@
 | `teaming.py` | 三種分隊方法：`隨機`、`自報程度蛇形`、`評分最佳化`（蛇形起點＋兩兩交換局部搜尋，目標是縮小最強與最弱隊的強度差，並盡量讓每隊有舉球員） |
 | `simulate.py` | 模擬報名者、逐球模擬一局（需領先 2 分）、贏球留場制依時間模擬一個時段；蒙地卡羅比較三種方法，附 bootstrap 95% 信賴區間與配對符號置換檢定 |
 | `crosscheck.py` | 把三種方法丟進另一套模擬引擎 `volley-sim`（逐球攻防＋搭檔默契）再比一次，確認結論不是本套件簡化模型造成的 |
+| `threshold.py` | **第 5 題報名門檻**：自報當先驗、比賽紀錄更新的後驗達標機率；誤放（型一）／誤擋（型二）、ROC、AUC、三種選門檻準則、新人三段式規則 |
+| `design.py` | **第 6 題實驗設計**：效果大小（Cohen's d、bootstrap CI）、樣本數公式與模擬檢定力（含 ANCOVA 調整）、A/A 測試與 ICC |
 | `web/split.html` | 用 Pyodide 在瀏覽器裡直接跑分隊，可放上 GitHub Pages |
 
-核心程式只用 Python 標準函式庫（方便 Pyodide），`crosscheck.py` 需要 numpy、pandas，測試需要 pytest。
+核心程式只用 Python 標準函式庫（方便 Pyodide），`crosscheck.py` 需要 numpy、pandas；`threshold.py`、`design.py` 需要 numpy、scipy（Pyodide 也有）；畫圖需要 matplotlib；測試需要 pytest。
 
 ## 怎麼跑
 
 ```bash
 pip install -r requirements.txt
-python -m pytest -q                                   # 42 項測試
+python -m pytest -q                                   # 60 項測試
 python -m volleysplit split data/sample_signups.csv --ratings data/sample_ratings.csv
 python -m volleysplit demo --players 28 --seed 1      # 一晚示範 → results/demo_night.json
 python -m volleysplit simulate --reps 1000            # 主要結果 → results/summary.json、sim_runs.csv
 python -m volleysplit scenarios --reps 200            # 敏感度分析 → results/scenarios.json
 python -m volleysplit.crosscheck --sim ../volley-sim/volley_sim.py --reps 500
+python analysis/q5_q6.py                              # 第 5、6 題 → results/threshold.json、design.json、figures/
 ```
 
 同一個 seed 結果完全相同。三種方法在同一晚用**同一份名單、同一串比賽亂數**（共同隨機數），所以差異可以做配對比較。
@@ -67,6 +70,10 @@ R 模型輸出 `code,rating,n_games` 的 CSV，用 `--ratings` 讀進來。綜�
 
 **解讀上的限制**：平衡分隊把最強與最弱隊的強度差縮小一半以上，但野場打 15 或 20 分、比賽隨機性大，平均分差只少約 0.2～0.7 分；上場公平性的改善很小。這些都依賴模擬假設，參數來源見 volley-sim 的 README。
 
+## 第 5、6 題：報名門檻與實驗設計
+
+完整說明見 [`docs/Q5_Q6_結果說明.md`](docs/Q5_Q6_結果說明.md)。重點：只看自報 ≥4 放行，放行者有 33% 其實未達標；後驗規則在同樣放行率下誤放率 24% → 17%。評分分隊 vs 隨機 d = 0.52，單館約 16 週可驗證；vs 自報蛇形 d = 0.17，每組要約 512 晚，需跨館串連。
+
 ## 檔案
 
 ```
@@ -74,6 +81,9 @@ volleysplit/   套件原始碼
 tests/         pytest 測試
 data/          範例報名表（40 人）與範例評分（24 人）
 results/       模擬輸出（JSON/CSV，網站直接讀）
+analysis/      第 5、6 題分析腳本
+figures/       第 5、6 題圖表
+docs/          結果說明
 web/split.html 瀏覽器試用頁
 ```
 

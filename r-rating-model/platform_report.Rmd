@@ -1,0 +1,233 @@
+---
+title: "跨球館實力評分：階層模型與冷啟動"
+subtitle: "StatSoft 期末專題：R 實質任務（平台版）"
+date: "`r format(Sys.Date(), '%Y-%m-%d')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    self_contained: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
+                      fig.width = 7.5, fig.height = 4.2, dpi = 150, fig.path = "figures/platform-")
+library(ggplot2)
+FONT <- "WenQuanYi Zen Hei"
+theme_set(theme_minimal(base_size = 12, base_family = FONT) +
+            theme(panel.grid.minor = element_blank(), plot.title.position = "plot"))
+pal <- c("#2B6CB0", "#D69E2E", "#38A169", "#C53030", "#6B46C1")
+f2 <- function(x, d = 2) formatC(x, format = "f", digits = d)
+pct <- function(x, d = 0) paste0(formatC(100 * x, format = "f", digits = d), "%")
+pv <- readRDS("results/platform_venues.rds")
+cs <- readRDS("results/cold_start.rds")
+py <- readRDS("results/platform_python.rds")
+res <- pv$results
+```
+
+# 問題
+
+專題從政大野場擴大成**全台跨球館的報名平台**：每個人一份個人檔案，在不同球館打球的紀錄都累積起來，由統計模型算出「你到底是什麼程度」。這帶來三個單一球館時沒有的統計問題：
+
+1. **各館不在同一把尺上。** 每間球館的分級是自己定的，A 館的「4 級」可能是 B 館的「3 級」；同一局兩隊一定在同一館，比賽結果只能比較同館的人。不同館要怎麼比？
+2. **新人冷啟動。** 剛建立檔案的人只有自報程度。要打幾局，系統才「認識」他？自報錯了，多久會被修正？
+3. **自我認知偏誤。** 誰容易高估自己？能不能從資料看出來？
+
+模型延續單館版（`report.html`）的逐球 Bradley–Terry，以下只說明新增的部分。
+
+# 模型：球館隨機效果
+
+$$
+\operatorname{logit} P(\text{A 隊得一分}) = \bar\theta_A - \bar\theta_B + \delta\,(n_A - n_B)
+$$
+$$
+\theta_i \sim N\big(\alpha_{h(i)} + \beta\,(\text{自報}_i - 3),\ \sigma^2\big),\qquad \alpha_v \sim N(0, \sigma_v^2)
+$$
+
+- $h(i)$ 是球員 $i$ 的**主場**球館，$\alpha_v$ 是該館球員的平均實力（例如有校隊常駐的館較強）。
+- 球館**不進比賽式**：同一局兩隊同館，館的效果會相消。球館只透過「誰的主場在哪」影響先驗。
+- 不同館能放在同一把尺上，靠的是到多個球館打球的**橋接球員**：他在 A 館贏多少、在 B 館贏多少，就把兩館連起來。沒有橋接球員時，$\alpha_v$ 只剩先驗，模型會誠實地給出很寬的區間。
+- $\sigma, \sigma_v$ 一樣用 Laplace 邊際概似估計（經驗貝氏）；資料顯示各館差不多時，$\hat\sigma_v \to 0$，模型自動退回單館版。
+
+程式：`R/platform_model.R` 的 `fit_platform_model()`。
+
+# 跨館比較：要多少橋接球員？
+
+## 設計
+
+5 間球館、每館 40 位主場球員；各館平均實力 $\alpha_v \sim N(0, 0.4^2)$。**各館自己分級**：自報程度只跟同館的人比（這正是現實中跨館不可比的原因）。每館 16 晚、每晚 12 局。跑館比例 0%、2%、5%、10%、20%，各重複 `r pv$R_REPS` 次。另外做一組「全台同一套分級」當對照。
+
+```{r bridge-plot, fig.height=4.4, fig.cap="左：所有球員（跨館）的估計實力排名與真實排名的 Spearman 相關。右：球員 95% 區間的實際涵蓋率。"}
+v <- res[res$level_mode == "venue", ]
+a <- aggregate(cbind(spearman, coverage) ~ p_travel + model, data = v, FUN = mean)
+L <- rbind(data.frame(a[, 1:2], metric = "全體排名 Spearman", y = a$spearman),
+           data.frame(a[, 1:2], metric = "95% 區間涵蓋率", y = a$coverage))
+L$metric <- factor(L$metric, c("全體排名 Spearman", "95% 區間涵蓋率"))
+ggplot(L, aes(p_travel, y, colour = model)) + geom_line() + geom_point() +
+  facet_wrap(~metric, scales = "free_y") +
+  geom_hline(data = data.frame(metric = factor("95% 區間涵蓋率", levels(L$metric)), y = 0.95),
+             aes(yintercept = y), linetype = 2, colour = "grey60") +
+  scale_x_continuous(labels = function(x) paste0(100 * x, "%"), breaks = c(0, .02, .05, .1, .2)) +
+  scale_colour_manual(values = pal[c(1, 4, 2)], name = NULL) +
+  labs(x = "跑館球員比例", y = NULL) + theme(legend.position = "bottom")
+```
+
+```{r bridge-table}
+a <- aggregate(cbind(bridges, spearman, coverage, venue_rmse, venue_cov) ~ level_mode + p_travel + model,
+               data = res, FUN = mean, na.action = na.pass)
+a <- a[order(a$level_mode != "venue", a$p_travel, a$model), ]
+out <- data.frame(分級 = ifelse(a$level_mode == "venue", "各館自己分級", "全台同一分級"),
+                  跑館比例 = pct(a$p_travel), 橋接人數 = f2(a$bridges, 1), 模型 = a$model,
+                  Spearman = f2(a$spearman), 涵蓋率 = pct(a$coverage, 1),
+                  `球館平均 RMSE` = ifelse(is.na(a$venue_rmse), "", f2(a$venue_rmse)),
+                  `球館區間涵蓋率` = ifelse(is.na(a$venue_cov), "", pct(a$venue_cov)), check.names = FALSE)
+knitr::kable(out, row.names = FALSE)
+g <- function(p, m, v, lm = "venue") mean(res[res$p_travel == p & res$model == m & res$level_mode == lm, v], na.rm = TRUE)
+H <- "階層模型_球館隨機效果"; S <- "單館模型_無球館效果"
+```
+
+重點：
+
+- **不加球館效果，跨館排名會錯，而且錯得很有自信。** 單館模型把各館的「4 級」當成一樣，Spearman 只有 `r f2(g(0.1, S, "spearman"))`，區間涵蓋率只有 `r pct(g(0.1, S, "coverage"))`。
+- **階層模型在 5% 跑館（每館約 2 人）時就大幅改善**（Spearman `r f2(g(0.05, H, "spearman"))`），10% 時 `r f2(g(0.1, H, "spearman"))`、球館平均的誤差約 `r f2(g(0.1, H, "venue_rmse"))`。
+- **完全沒有跑館的人（0%）時，模型無法比較各館**，但它會誠實地把區間放寬，涵蓋率仍有 `r pct(g(0, H, "coverage"))`。這對平台的意義是：跨館排名的可信度取決於有多少人跨館，系統應該顯示這個不確定性，而不是假裝知道。
+- 若全台用同一套分級，自報本身就部分把各館連起來，兩個模型差距縮小（表格最後兩列：`r f2(g(0.1, S, "spearman", "global"))` vs `r f2(g(0.1, H, "spearman", "global"))`）。
+
+```{r venue-demo, fig.height=3.4, fig.cap="示範資料（跑館 10%）：各館平均實力的估計值與 95% 區間（點），× 為真值。"}
+dv <- pv$demo$venues
+dv$alpha_true <- dv$alpha_true - mean(dv$alpha_true)
+ggplot(dv, aes(reorder(venue, alpha), alpha)) +
+  geom_pointrange(aes(ymin = lower, ymax = upper), colour = pal[1]) +
+  geom_point(aes(y = alpha_true), shape = 4, size = 3, colour = pal[4]) +
+  coord_flip() + labs(x = NULL, y = "球館平均實力（logit，相對各館平均）")
+```
+
+# 冷啟動：新人要打幾局？
+
+## 線上更新演算法
+
+平台不可能每打一局就重跑整個模型，所以另外寫了**每局即時更新**的版本（`online_update()`）：每個人只存實力的平均 $\mu$ 和變異數 $v$。新人以先驗開始：$\mu = \hat\alpha_{\text{主場}} + \hat\beta(\text{自報} - 3)$，$v = \hat\sigma^2$。每打完一局：
+
+$$
+v_j \leftarrow \Big(\frac{1}{v_j} + w_j^2\,\kappa^2 N p(1-p)\Big)^{-1},\qquad
+\mu_j \leftarrow \mu_j \pm v_j\, w_j\,\kappa\,(a - Np)
+$$
+
+其中 $N$ 是該局總球數、$a$ 是 A 隊得分、$p$ 是賽前預測的每球得分機率、$w_j = 1/\text{隊伍人數}$、$\kappa$ 是考慮隊伍實力不確定性的修正。這是對貝氏後驗的 Laplace 近似（假設密度濾波），與 Glicko 評分同一家族。
+
+## 設計
+
+先模擬一間球館 40 人打 16 晚，用批次模型估出老球員實力。接著讓 `r cs$N_NEW` 位新人各自加入，每晚和隨機 24 位老球員分 5 隊打 12 局（新人平均每晚上場約 `r f2(cs$sets_per_night, 1)` 局），追蹤 15 晚。同一批新人、同一串比賽，比較四種先驗：自報準確、**高估 2 級**、**低估 2 級**、不填自報。
+
+```{r cold-width, fig.height=3.8, fig.cap="新人 95% 區間半寬隨上場局數縮小。虛線：半寬 0.4（約一個自報級距）與 0.3。"}
+r <- cs$res
+w <- aggregate(hw ~ scenario + set, data = r[r$scenario %in% c("自報準確", "不填自報"), ], FUN = mean)
+ggplot(w, aes(set, hw, colour = scenario)) + geom_line(linewidth = 1) +
+  geom_hline(yintercept = c(0.4, 0.3), linetype = 2, colour = "grey60") +
+  scale_colour_manual(values = pal[c(2, 1)], name = NULL) +
+  labs(x = "新人上場局數", y = "95% 區間半寬（logit）") + theme(legend.position = "bottom")
+first_below <- function(sc, thr) { x <- w[w$scenario == sc, ]; x$set[which(x$hw <= thr)[1]] }
+```
+
+```{r cold-bias, fig.height=4.2, fig.cap="估計值減真實實力（中位數與 25–75% 範圍）。自報錯 2 級的人，系統要多久才修正？"}
+b <- aggregate(err ~ scenario + set, data = r, FUN = function(x) quantile(x, c(.25, .5, .75)))
+b <- data.frame(scenario = b$scenario, set = b$set, lo = b$err[, 1], med = b$err[, 2], hi = b$err[, 3])
+b <- b[b$set <= 60, ]
+ggplot(b, aes(set, med, colour = scenario, fill = scenario)) +
+  geom_ribbon(aes(ymin = lo, ymax = hi), alpha = 0.12, colour = NA) + geom_line(linewidth = 1) +
+  geom_hline(yintercept = 0, colour = "grey50") +
+  scale_colour_manual(values = pal[c(1, 4, 3, 2)], name = NULL, aesthetics = c("colour", "fill")) +
+  labs(x = "新人上場局數", y = "估計 − 真實（logit）") + theme(legend.position = "bottom")
+half <- function(sc) { x <- aggregate(err ~ set, data = r[r$scenario == sc, ], FUN = mean)
+  x$set[which(abs(x$err) <= abs(x$err[1]) / 2)[1]] }
+cv <- aggregate(covered ~ scenario, data = r[r$set >= 1, ], FUN = mean)
+```
+
+結論：
+
+- **區間收斂得慢。** 自報準確的新人，一開始 95% 區間半寬 `r f2(w$hw[w$scenario=="自報準確" & w$set==0])`，打 `r first_below("自報準確", 0.4)` 局（約 `r round(first_below("自報準確", 0.4)/cs$sets_per_night)` 晚）才縮到 0.4（約一個級距）。原因是一局只有一個比分，卻要分給 4–6 位隊友：個人的資訊被稀釋了。
+- **自報很值錢。** 不填自報的人要打 `r first_below("不填自報", 0.4)` 局才達到同樣的寬度；換句話說，一個大致誠實的自報，抵得上 `r first_below("不填自報", 0.4) - first_below("自報準確", 0.4)` 局左右的比賽資料。
+- **自報錯 2 級，大約 `r half("高估2級")` 局（`r round(half("高估2級")/cs$sets_per_night)` 晚）修正一半**；高估與低估的修正速度差不多（低估：`r half("低估2級")` 局）。
+- **對平台設計的建議**：新人前幾晚應該讓報名門檻放寬（用區間下限或上限判斷），或請新人先打「定級場」；系統顯示等級時應同時顯示「可信度」（例如已打局數或區間寬度）。
+
+線上更新給新人的 95% 區間略偏窄：自報準確或不填自報時，實際涵蓋率約 `r pct(cv$covered[cv$scenario=="自報準確"])`；自報錯 2 級的人只有約 `r pct(cv$covered[cv$scenario=="高估2級"])`，因為先驗本身就錯了，區間在修正完成前會「自信地錯」。所以前幾晚的等級只能當參考，這也支持上面「定級場」的建議。
+
+# 線上更新 vs 批次模型
+
+```{r online-table}
+o <- aggregate(cbind(spearman, coverage, cor_with_batch) ~ p_travel, FUN = mean,
+               data = res[res$model == "線上更新" & res$level_mode == "venue", ])
+hb <- aggregate(cbind(spearman, coverage) ~ p_travel, FUN = mean,
+                data = res[res$model == H & res$level_mode == "venue", ])
+tab <- data.frame(跑館比例 = pct(o$p_travel), `線上 Spearman` = f2(o$spearman), `批次 Spearman` = f2(hb$spearman),
+                  `線上涵蓋率` = pct(o$coverage), `批次涵蓋率` = pct(hb$coverage),
+                  `線上與批次估計的相關` = f2(o$cor_with_batch), check.names = FALSE)
+knitr::kable(tab, row.names = FALSE)
+```
+
+線上版只掃過資料一次、而且不知道球館效果，所以排序比批次版差，區間也**太窄**（涵蓋率明顯低於 95%：它把每局都當成獨立的新資訊，忽略了隊友估計之間的相關）。**建議的平台架構**：每局用線上更新即時顯示，每晚關館後用批次階層模型重估一次、覆蓋線上結果，並更新 $\hat\alpha, \hat\beta, \hat\sigma$。
+
+# 套用到 Python 跨球館模擬資料
+
+另一條工作線的 Python 模擬器（`volley-sim/platform`）有 4 間球館（含政大野場）、150 人、8 週，各館賽制、報名門檻、自評文化都不同，自報偏誤還跟性別、球齡有關。它的機制和本模型不同，是「模型設定不完全正確」的考驗。
+
+```{r py-table}
+t <- py$table
+out <- data.frame(跨館比例 = t$cross, 模型 = t$model, 局數 = t$n_games, 橋接人數 = t$bridges,
+                  Spearman = f2(t$spearman), `涵蓋率*` = pct(t$coverage),
+                  `球館平均誤差*` = f2(t$venue_gap_rmse), `σv 估計` = ifelse(is.na(t$sigma_v), "", f2(t$sigma_v)),
+                  check.names = FALSE)
+knitr::kable(out, row.names = FALSE)
+```
+
+\* Python 模擬器的實力尺度和模型不同，先以線性迴歸把真值換到模型尺度再計算。
+
+- 三種跨館比例下排名相關都在 `r f2(min(t$spearman))`–`r f2(max(t$spearman))`，區間涵蓋率接近或高於 95%。
+- 在這份資料裡**階層模型沒有比較好**，甚至把進階館（V03）和新手館（V04）跟政大的差距都估得太大。原因：Python 模擬器的自報程度是「全台同一把尺再加上自評文化偏誤」，自報本身已經把各館連起來（相當於第 3 節「全台同一分級」的情境）；再加上它的逐球引擎與 logit 線性假設不同，強館之間的差距被放大。
+- **所以要不要球館效果，取決於各館分級能不能互相比較**。平台上線時無法事先知道，所以保留階層模型，讓 $\hat\sigma_v$ 由資料決定，同時把「跨館差距」列為需要真實資料檢驗的限制。
+
+## 自我認知偏誤：Bland–Altman 與誤差迴歸
+
+為了避免循環論證，這裡的實力估計**不使用自報先驗**（只用比賽結果＋球館效果）。用全體的「自報 ~ 估計實力」校準線，把估計實力換成「應有級數」，再看自報減應有級數。
+
+```{r ba, fig.height=4.2, fig.cap="Bland–Altman 圖：橫軸為自報與應有級數的平均，縱軸為差（正 = 高估自己）。虛線為平均差與 95% 一致性界限。"}
+d <- py$ba$data
+set.seed(1)
+ggplot(d, aes(avg, diff, colour = home_venue)) +
+  geom_hline(yintercept = 0, colour = "grey40") +
+  geom_hline(yintercept = c(py$ba$mean_diff, py$ba$loa), linetype = c(1, 2, 2), colour = "grey60") +
+  geom_jitter(width = 0.05, height = 0.05, size = 2, alpha = 0.8) +
+  scale_colour_manual(values = pal, name = "主場") +
+  labs(x = "（自報 + 應有級數）/ 2", y = "自報 − 應有級數")
+```
+
+```{r ba-coef}
+cf <- py$ba$coefs
+cf$term <- c("(截距)", "男性", "球齡（每年）", "主場 V02", "主場 V03", "主場 V04")
+knitr::kable(data.frame(變數 = cf$term,
+                        `用估計實力` = sprintf("%s (%s)", f2(cf$est), f2(cf$est_se)),
+                        `用真實實力（只有模擬才有）` = sprintf("%s (%s)", f2(cf$true_theta), f2(cf$true_se)),
+                        check.names = FALSE), row.names = FALSE,
+             caption = "誤差迴歸：自報 − 應有級數 ~ 性別 + 球齡 + 主場（括號為標準誤）")
+```
+
+- 用估計實力算出的「每個人高估多少」，和用真實實力算的相關 `r f2(py$ba$cor_with_truth)`：**個人層級的高估／低估抓得到**，可以當作平台提醒（例如「你的自報比比賽結果高 1 級」）。
+- 但**群體層級的效果（男性、球齡、球館文化）在 150 人時大多不顯著**，即使用真實實力也一樣；這是樣本數不夠、檢定力不足，不是方法錯。報告中可以說明需要多少人才偵測得到。
+
+# 結論與限制
+
+1. 跨球館平台需要**球館隨機效果**，否則各館自己分級時，跨館排名會錯而且區間過窄。
+2. 跨館比較靠**橋接球員**：每館約 2–4 人跨館就有明顯改善；沒有人跨館時，模型會誠實地表示無法比較。
+3. **冷啟動慢**：一般新人約 `r first_below("自報準確", 0.4)` 局（`r round(first_below("自報準確", 0.4)/cs$sets_per_night)` 晚）後區間才縮到一個級距；自報錯 2 級要約 `r half("高估2級")` 局修正一半。自報先驗大約省下 `r first_below("不填自報", 0.4) - first_below("自報準確", 0.4)` 局。
+4. 平台建議：**即時線上更新 + 每晚批次重估**；等級旁邊顯示可信度。
+5. 限制：模擬參數是假設；Python 資料顯示當逐球機制非 logit 線性時，強館差距可能被高估；實力假設不隨時間改變（可加 drift，`online_run(drift = )` 已預留）。
+
+**重現**
+
+```
+R_REPS=100 Rscript analysis/04_platform_venues.R   # 4 核心約 10 分鐘
+N_NEW=400  Rscript analysis/05_cold_start.R        # 約 20 秒
+Rscript analysis/06_platform_python.R              # 需要 volley-sim/platform 資料
+Rscript -e 'rmarkdown::render("platform_report.Rmd")'
+```

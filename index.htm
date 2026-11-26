@@ -71,9 +71,9 @@
     </div>
     <div class="card kpi">
       <div class="label">實力估計與真實實力的排序相關</div>
-      <div class="value">0.87 <span class="from">← 0.77</span></div>
+      <div class="value">0.86 <span class="from">← 0.77</span></div>
       <div class="delta">比只看自評程度更準</div>
-      <div class="sub">R 模型套用到模擬野場 235 局</div>
+      <div class="sub">R 模型套用到模擬野場 229 局</div>
     </div>
   </div>
 
@@ -125,7 +125,7 @@
       <tbody>
         <tr><td>德國排球甲級聯賽每局比分 2013/14–2018/19</td><td class="num">6,330 局</td><td>R 套件 <a href="https://github.com/bozhinvi/volleystat">volleystat</a>，CC0</td><td>用上半季預測下半季，驗證實力模型；借用實力離散程度與平均分差</td></tr>
         <tr><td>DataVolley 範例比賽（逐球紀錄）</td><td class="num">127 球</td><td>R 套件 <a href="https://github.com/openvolley/datavolley">datavolley</a>，MIT</td><td>設定攻擊得分率、失誤率、被攔率等技術統計基準</td></tr>
-        <tr><td>模擬野場資料 <code>volley-sim</code></td><td class="num">6 週、235 局、80 人</td><td>本專題自行生成，種子 20261126</td><td>逐球模擬發球、攻擊、攔網與搭檔默契；當作「野場紀錄」</td></tr>
+        <tr><td>模擬野場資料 <code>volley-sim</code></td><td class="num">6 週、229 局、80 人</td><td>本專題自行生成，種子 20261126</td><td>逐球模擬發球、攻擊、攔網與搭檔默契；當作「野場紀錄」</td></tr>
       </tbody>
     </table>
   </div>
@@ -165,7 +165,7 @@
           <tbody>
             <tr><td>德甲真實比分，預測下半季 3,105 局</td><td>命中率 69%，log loss 0.585（擲硬幣 0.693）</td></tr>
             <tr><td>自己的模擬，16 晚資料</td><td>排序相關 0.82，95% 區間實際涵蓋約 91–93%</td></tr>
-            <tr><td>Python 模擬器（機制不同）</td><td>排序相關 0.87，比只看自評的 0.77 高</td></tr>
+            <tr><td>Python 模擬器（機制不同）</td><td>排序相關 0.86，比只看自評的 0.77 高</td></tr>
           </tbody>
         </table>
       </div>
@@ -246,7 +246,7 @@
   <div class="panel-head">
     <p class="eyebrow">04 · 球員分析</p>
     <h2 id="h-players">實力、攻擊、位置與搭檔</h2>
-    <p>以模擬野場 6 週、235 局的資料示範系統能產出的球員統計。所有球員都是模擬代號；實際使用時只給本人看自己的資料，不公開排名。</p>
+    <p>以模擬野場 6 週、229 局的資料示範系統能產出的球員統計。所有球員都是模擬代號；實際使用時只給本人看自己的資料，不公開排名。</p>
     <div class="rubric"><span>對應評分：統計方法 20</span><span>資料品質 15</span></div>
   </div>
 
@@ -276,7 +276,7 @@
     </div>
     <div class="card">
       <h4>怎麼讀這張圖</h4>
-      <p class="small muted">主攻和舉球的得分率約 32%，接應約 28%。差距不大，而且模擬器裡攻擊得分只跟球員實力有關、不看位置，所以這裡的差異反映的是「各位置剛好分到的球員實力」，不是位置本身的效果。</p>
+      <p class="small muted">主攻的得分率約 30%，接應約 27%。差距不大，而且模擬器裡攻擊得分只跟球員實力有關、不看位置，所以這裡的差異反映的是「各位置剛好分到的球員實力」，不是位置本身的效果。</p>
       <p class="small muted">區間假設每次攻擊獨立；同一位球員的多次攻擊其實相關，真正的區間會更寬。</p>
       <div class="table-wrap"><table id="position-table"><thead><tr><th>位置</th><th class="num">人數</th><th class="num">攻擊次數</th><th class="num">得分率</th><th class="num">攻擊效率</th></tr></thead><tbody></tbody></table></div>
       <p class="small muted">攻擊效率 =（得分 − 失誤 − 被攔）÷ 攻擊次數。</p>
@@ -285,7 +285,7 @@
 
   <h3>「跟誰很合」估得出來嗎？</h3>
   <div class="callout">
-    <p><b>結論：搭檔次數可以算，但默契目前估不出來。</b> 6 週裡共出現 <span id="n-pairs">1,115</span> 種同隊組合，同隊 5 局以上的只有 <span id="n-pairs5">343</span> 對，最多的一對也只有 17 局。R 模型估出的每一對默契，95% 區間全部跨過 0。</p>
+    <p><b>結論：搭檔次數可以算，但默契目前估不出來。</b> 6 週裡共出現 <span id="n-pairs">1,190</span> 種同隊組合，同隊 5 局以上的只有 <span id="n-pairs5">302</span> 對，最多的一對也只有 19 局。R 模型估出的每一對默契，95% 區間全部跨過 0。</p>
     <p class="small">R 的模擬研究也一致：即使有 32 晚資料，估計默契與真實默契的相關只有 0.18。所以分隊只用個人實力，「默契」只當探索性指標，並附上區間。</p>
   </div>
   <h4 style="margin-top:20px">同隊次數最多的組合</h4>
@@ -336,7 +336,7 @@ python -m volleysplit split data/sample_signups.csv \
       <tbody>
         <tr><td><a href="volley-sim/README.md">volley-sim/</a></td><td>Python</td><td>模擬野場資料產生器</td><td>固定種子，可重現</td></tr>
         <tr><td><a href="r-rating-model/README.md">r-rating-model/</a></td><td>R</td><td>實力評分模型與三層驗證</td><td>模擬研究 200 次重複；<code>renv.lock</code></td></tr>
-        <tr><td><a href="python-team-split/README.md">python-team-split/</a></td><td>Python</td><td>報名、分隊、模擬比較、網頁工具</td><td>pytest 42 項；<code>requirements.txt</code></td></tr>
+        <tr><td><a href="python-team-split/README.md">python-team-split/</a></td><td>Python</td><td>報名、分隊、模擬比較、網頁工具</td><td>pytest 60 項；<code>requirements.txt</code></td></tr>
         <tr><td><a href="ai-skill/README.md">ai-skill/</a></td><td>Python</td><td>分隊檢查 AI skill 與 5 次執行紀錄</td><td>含 2 個邊界案例與暴力解檢核</td></tr>
       </tbody>
     </table>

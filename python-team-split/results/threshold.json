@@ -1,0 +1,500 @@
+{
+  "config": {
+    "cut": 0.4,
+    "self_bias": 0.3,
+    "self_sd": 0.6,
+    "info_per_set": 0.044,
+    "self_level_rule": 4
+  },
+  "level_prior": {
+    "1": [
+      -1.5093,
+      0.6269
+    ],
+    "2": [
+      -0.7834,
+      0.5402
+    ],
+    "3": [
+      -0.2127,
+      0.5423
+    ],
+    "4": [
+      0.3555,
+      0.5434
+    ],
+    "5": [
+      1.1521,
+      0.6573
+    ]
+  },
+  "roc_by_sets": {
+    "0": {
+      "auc": 0.8978,
+      "auc_ci95_n4000": [
+        0.8852,
+        0.9043
+      ]
+    },
+    "10": {
+      "auc": 0.9181,
+      "auc_ci95_n4000": [
+        0.9114,
+        0.9294
+      ]
+    },
+    "40": {
+      "auc": 0.9418,
+      "auc_ci95_n4000": [
+        0.9345,
+        0.9475
+      ]
+    },
+    "150": {
+      "auc": 0.9704,
+      "auc_ci95_n4000": [
+        0.9655,
+        0.9741
+      ]
+    }
+  },
+  "self_report_rule": {
+    "self_ge_4": {
+      "tp": 6111.0,
+      "fp": 3168.0,
+      "fn": 729.0,
+      "tn": 9992.0,
+      "tpr": 0.8934,
+      "fpr": 0.2407,
+      "fnr": 0.1066,
+      "false_admit_share": 0.3414
+    },
+    "self_ge_5": {
+      "tp": 3874.0,
+      "fp": 502.0,
+      "fn": 2966.0,
+      "tn": 12658.0,
+      "tpr": 0.5664,
+      "fpr": 0.0381,
+      "fnr": 0.4336,
+      "false_admit_share": 0.1147
+    }
+  },
+  "mixed_population": {
+    "sets_source": "r-rating-model/output/ratings_volley_sim.csv 的 sets 欄（80 人經驗分布）",
+    "qualified_share": 0.3488,
+    "auc": 0.9315,
+    "self_ge_4": {
+      "tp": 12486.0,
+      "fp": 6172.0,
+      "fn": 1465.0,
+      "tn": 19877.0,
+      "tpr": 0.895,
+      "fpr": 0.2369,
+      "fnr": 0.105,
+      "false_admit_share": 0.3308
+    },
+    "choices": {
+      "youden": {
+        "q": 0.34,
+        "tp": 12167,
+        "fp": 4445,
+        "fn": 1784,
+        "tn": 21604,
+        "tpr": 0.8721,
+        "fpr": 0.1706,
+        "fnr": 0.1279,
+        "false_admit_share": 0.2676
+      },
+      "fpr_5pct": {
+        "q": 0.63,
+        "tp": 9110,
+        "fp": 1292,
+        "fn": 4841,
+        "tn": 24757,
+        "tpr": 0.653,
+        "fpr": 0.0496,
+        "fnr": 0.347,
+        "false_admit_share": 0.1242
+      },
+      "cost_2to1": {
+        "q": 0.65,
+        "tp": 8921,
+        "fp": 1181,
+        "fn": 5030,
+        "tn": 24868,
+        "tpr": 0.6395,
+        "fpr": 0.0453,
+        "fnr": 0.3605,
+        "false_admit_share": 0.1169
+      }
+    }
+  },
+  "three_way": {
+    "q_lo": 0.2,
+    "q_hi": 0.8,
+    "by_sets": [
+      {
+        "sets": 0,
+        "admit": 0.2172,
+        "undecided": 0.243,
+        "reject": 0.5397,
+        "false_admit_share": 0.1186,
+        "post_sd_median": 0.5434
+      },
+      {
+        "sets": 5,
+        "admit": 0.195,
+        "undecided": 0.3026,
+        "reject": 0.5024,
+        "false_admit_share": 0.0985,
+        "post_sd_median": 0.5266
+      },
+      {
+        "sets": 10,
+        "admit": 0.184,
+        "undecided": 0.3182,
+        "reject": 0.4978,
+        "false_admit_share": 0.0867,
+        "post_sd_median": 0.5112
+      },
+      {
+        "sets": 15,
+        "admit": 0.1842,
+        "undecided": 0.3221,
+        "reject": 0.4936,
+        "false_admit_share": 0.0776,
+        "post_sd_median": 0.4972
+      },
+      {
+        "sets": 20,
+        "admit": 0.1829,
+        "undecided": 0.3221,
+        "reject": 0.495,
+        "false_admit_share": 0.076,
+        "post_sd_median": 0.4842
+      },
+      {
+        "sets": 25,
+        "admit": 0.1852,
+        "undecided": 0.3109,
+        "reject": 0.504,
+        "false_admit_share": 0.0691,
+        "post_sd_median": 0.4721
+      },
+      {
+        "sets": 30,
+        "admit": 0.1869,
+        "undecided": 0.2961,
+        "reject": 0.517,
+        "false_admit_share": 0.0647,
+        "post_sd_median": 0.461
+      },
+      {
+        "sets": 35,
+        "admit": 0.1902,
+        "undecided": 0.2999,
+        "reject": 0.5099,
+        "false_admit_share": 0.062,
+        "post_sd_median": 0.4506
+      },
+      {
+        "sets": 40,
+        "admit": 0.194,
+        "undecided": 0.2927,
+        "reject": 0.5133,
+        "false_admit_share": 0.068,
+        "post_sd_median": 0.4408
+      },
+      {
+        "sets": 45,
+        "admit": 0.1998,
+        "undecided": 0.2879,
+        "reject": 0.5122,
+        "false_admit_share": 0.0688,
+        "post_sd_median": 0.4317
+      },
+      {
+        "sets": 50,
+        "admit": 0.2038,
+        "undecided": 0.2817,
+        "reject": 0.5145,
+        "false_admit_share": 0.0709,
+        "post_sd_median": 0.4231
+      },
+      {
+        "sets": 55,
+        "admit": 0.1984,
+        "undecided": 0.2729,
+        "reject": 0.5287,
+        "false_admit_share": 0.0567,
+        "post_sd_median": 0.415
+      },
+      {
+        "sets": 60,
+        "admit": 0.2024,
+        "undecided": 0.2731,
+        "reject": 0.5245,
+        "false_admit_share": 0.0541,
+        "post_sd_median": 0.4074
+      },
+      {
+        "sets": 65,
+        "admit": 0.2104,
+        "undecided": 0.2637,
+        "reject": 0.5258,
+        "false_admit_share": 0.058,
+        "post_sd_median": 0.4001
+      },
+      {
+        "sets": 70,
+        "admit": 0.2084,
+        "undecided": 0.258,
+        "reject": 0.5336,
+        "false_admit_share": 0.0616,
+        "post_sd_median": 0.3933
+      },
+      {
+        "sets": 75,
+        "admit": 0.2213,
+        "undecided": 0.2502,
+        "reject": 0.5285,
+        "false_admit_share": 0.0536,
+        "post_sd_median": 0.3867
+      },
+      {
+        "sets": 80,
+        "admit": 0.2147,
+        "undecided": 0.2499,
+        "reject": 0.5354,
+        "false_admit_share": 0.051,
+        "post_sd_median": 0.3805
+      },
+      {
+        "sets": 85,
+        "admit": 0.2271,
+        "undecided": 0.2361,
+        "reject": 0.5368,
+        "false_admit_share": 0.0577,
+        "post_sd_median": 0.3746
+      },
+      {
+        "sets": 90,
+        "admit": 0.2289,
+        "undecided": 0.2362,
+        "reject": 0.5349,
+        "false_admit_share": 0.0498,
+        "post_sd_median": 0.369
+      },
+      {
+        "sets": 95,
+        "admit": 0.2185,
+        "undecided": 0.2375,
+        "reject": 0.5441,
+        "false_admit_share": 0.0522,
+        "post_sd_median": 0.3636
+      },
+      {
+        "sets": 100,
+        "admit": 0.2255,
+        "undecided": 0.2264,
+        "reject": 0.5482,
+        "false_admit_share": 0.0532,
+        "post_sd_median": 0.3584
+      },
+      {
+        "sets": 105,
+        "admit": 0.2225,
+        "undecided": 0.232,
+        "reject": 0.5455,
+        "false_admit_share": 0.0476,
+        "post_sd_median": 0.3534
+      },
+      {
+        "sets": 110,
+        "admit": 0.2246,
+        "undecided": 0.2279,
+        "reject": 0.5475,
+        "false_admit_share": 0.0454,
+        "post_sd_median": 0.3487
+      },
+      {
+        "sets": 115,
+        "admit": 0.2311,
+        "undecided": 0.2221,
+        "reject": 0.5467,
+        "false_admit_share": 0.0463,
+        "post_sd_median": 0.3441
+      },
+      {
+        "sets": 120,
+        "admit": 0.2324,
+        "undecided": 0.2223,
+        "reject": 0.5453,
+        "false_admit_share": 0.0471,
+        "post_sd_median": 0.3397
+      },
+      {
+        "sets": 125,
+        "admit": 0.2343,
+        "undecided": 0.2193,
+        "reject": 0.5464,
+        "false_admit_share": 0.0429,
+        "post_sd_median": 0.3355
+      },
+      {
+        "sets": 130,
+        "admit": 0.2349,
+        "undecided": 0.2094,
+        "reject": 0.5557,
+        "false_admit_share": 0.0453,
+        "post_sd_median": 0.3314
+      },
+      {
+        "sets": 135,
+        "admit": 0.2329,
+        "undecided": 0.2158,
+        "reject": 0.5513,
+        "false_admit_share": 0.0494,
+        "post_sd_median": 0.3275
+      },
+      {
+        "sets": 140,
+        "admit": 0.2366,
+        "undecided": 0.2066,
+        "reject": 0.5568,
+        "false_admit_share": 0.0418,
+        "post_sd_median": 0.3237
+      },
+      {
+        "sets": 145,
+        "admit": 0.2347,
+        "undecided": 0.2061,
+        "reject": 0.5592,
+        "false_admit_share": 0.0441,
+        "post_sd_median": 0.32
+      },
+      {
+        "sets": 150,
+        "admit": 0.2384,
+        "undecided": 0.2052,
+        "reject": 0.5564,
+        "false_admit_share": 0.0422,
+        "post_sd_median": 0.3164
+      },
+      {
+        "sets": 155,
+        "admit": 0.2434,
+        "undecided": 0.1993,
+        "reject": 0.5573,
+        "false_admit_share": 0.0472,
+        "post_sd_median": 0.313
+      },
+      {
+        "sets": 160,
+        "admit": 0.2485,
+        "undecided": 0.1974,
+        "reject": 0.554,
+        "false_admit_share": 0.0455,
+        "post_sd_median": 0.3097
+      },
+      {
+        "sets": 165,
+        "admit": 0.2441,
+        "undecided": 0.1943,
+        "reject": 0.5616,
+        "false_admit_share": 0.041,
+        "post_sd_median": 0.3065
+      },
+      {
+        "sets": 170,
+        "admit": 0.2521,
+        "undecided": 0.1908,
+        "reject": 0.5571,
+        "false_admit_share": 0.0407,
+        "post_sd_median": 0.3034
+      },
+      {
+        "sets": 175,
+        "admit": 0.2433,
+        "undecided": 0.1909,
+        "reject": 0.5658,
+        "false_admit_share": 0.0401,
+        "post_sd_median": 0.3003
+      },
+      {
+        "sets": 180,
+        "admit": 0.2462,
+        "undecided": 0.1946,
+        "reject": 0.5592,
+        "false_admit_share": 0.0368,
+        "post_sd_median": 0.2974
+      },
+      {
+        "sets": 185,
+        "admit": 0.2477,
+        "undecided": 0.1835,
+        "reject": 0.5687,
+        "false_admit_share": 0.0349,
+        "post_sd_median": 0.2946
+      },
+      {
+        "sets": 190,
+        "admit": 0.2477,
+        "undecided": 0.1852,
+        "reject": 0.5672,
+        "false_admit_share": 0.0434,
+        "post_sd_median": 0.2918
+      },
+      {
+        "sets": 195,
+        "admit": 0.2493,
+        "undecided": 0.1814,
+        "reject": 0.5693,
+        "false_admit_share": 0.0357,
+        "post_sd_median": 0.2891
+      },
+      {
+        "sets": 200,
+        "admit": 0.2506,
+        "undecided": 0.181,
+        "reject": 0.5684,
+        "false_admit_share": 0.0381,
+        "post_sd_median": 0.2865
+      }
+    ],
+    "sets_for_80pct_decided": 152
+  },
+  "r_model_check": {
+    "n": 80,
+    "qualified": 27,
+    "auc_posterior": 0.9706,
+    "auc_ci95": [
+      0.9333,
+      0.9961
+    ],
+    "auc_self_level": 0.9001,
+    "rule_posterior_youden_q": 0.34,
+    "posterior_rule": {
+      "tp": 26,
+      "fp": 9,
+      "fn": 1,
+      "tn": 44,
+      "tpr": 0.9629629629629629,
+      "fpr": 0.16981132075471697,
+      "fnr": 0.037037037037037035,
+      "false_admit_share": 0.2571428571428571
+    },
+    "self_ge_4": {
+      "tp": 23,
+      "fp": 10,
+      "fn": 4,
+      "tn": 43,
+      "tpr": 0.8518518518518519,
+      "fpr": 0.18867924528301888,
+      "fnr": 0.14814814814814814,
+      "false_admit_share": 0.30303030303030304
+    },
+    "note": "R 的 θ 為每球 logit，÷0.4 換成實力尺度；θ 已經過收縮、平均置中，只作方向性檢查。"
+  }
+}

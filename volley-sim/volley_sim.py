@@ -35,7 +35,7 @@ from itertools import combinations
 import numpy as np
 import pandas as pd
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 
 # --------------------------------------------------------------------------
 # 參數。source = "datavolley" 表示由公開比賽紀錄算出（見 README 的「參數來源」），
@@ -66,6 +66,10 @@ DEFAULT_CONFIG = {
     # ---- 位置 ----
     "positions": {"主攻": 0.30, "副攻": 0.15, "舉球": 0.15, "接應": 0.10, "自由": 0.08, "不限": 0.22},
     "attack_weight": {"主攻": 1.0, "接應": 0.9, "副攻": 0.7, "不限": 0.6, "舉球": 0.15, "自由": 0.0},
+    # 假設：誰接發球／防守的權重（自由球員接最多），接球者實力影響被直接得分與防守
+    "defense_weight": {"自由": 2.0, "主攻": 1.0, "不限": 0.8, "接應": 0.6, "舉球": 0.4, "副攻": 0.3},
+    # 假設：誰負責第二球（舉球）的權重；舉球者實力影響攻擊品質
+    "set_weight": {"舉球": 4.0, "自由": 0.8, "不限": 0.6, "接應": 0.4, "主攻": 0.3, "副攻": 0.2},
     # ---- 搭檔默契 ----
     "chem_prob": 0.10,                   # 假設：10% 的兩兩組合有非零默契
     "chem_sd": 0.4,                      # 假設：非零默契 ~ N(0, 0.4)，單位與 θ 相同
@@ -193,13 +197,19 @@ def form_teams(ids, n_teams: int, method: str, pool: pd.DataFrame, rng: np.rando
 # 單局模擬（逐球）
 # --------------------------------------------------------------------------
 def _new_stats(ids):
-    return {i: dict(attempts=0, kills=0, errors=0, blocked=0, serves=0, aces=0, serve_errors=0) for i in ids}
+    return {i: dict(attempts=0, kills=0, errors=0, blocked=0, serves=0, aces=0, serve_errors=0,
+                    receives=0, aced=0, digs=0) for i in ids}
 
 
 def _pick_attacker(ids, pool, cfg, rng):
     w = np.array([cfg["attack_weight"][pool.at[i, "main_position"]] for i in ids], dtype=float)
     if w.sum() == 0:
         w = np.ones(len(ids))
+    return ids[rng.choice(len(ids), p=w / w.sum())]
+
+
+def _pick_defender(ids, pool, cfg, rng, key="defense_weight"):
+    w = np.array([cfg[key][pool.at[i, "main_position"]] for i in ids], dtype=float)
     return ids[rng.choice(len(ids), p=w / w.sum())]
 
 
@@ -210,20 +220,28 @@ def simulate_rally(serving, receiving, server, S, pool, cfg, rng, stats):
     r_side, r_ids = receiving
     th = pool["true_skill"]
     stats[server]["serves"] += 1
-    diff = th[server] - S[r_side]
+    passer = _pick_defender(r_ids, pool, cfg, rng)          # 接發球的人
+    diff = th[server] - 0.5 * (th[passer] + S[r_side])
     p_ace = _sigmoid(_logit(cfg["p_ace"]) + b * diff)
     p_err = _sigmoid(_logit(cfg["p_serve_error"]) - b * th[server])
     u = rng.random()
     if u < p_ace:
         stats[server]["aces"] += 1
+        stats[passer]["receives"] += 1
+        stats[passer]["aced"] += 1
         return s_side
     if u < p_ace + p_err:
         stats[server]["serve_errors"] += 1
         return r_side
+    stats[passer]["receives"] += 1
     att_side, att_ids, def_side = r_side, r_ids, s_side   # 接發方先攻
     for _ in range(40):
         hitter = _pick_attacker(att_ids, pool, cfg, rng)
-        d = 0.5 * (th[hitter] + S[att_side]) - S[def_side]
+        def_ids = s_ids if att_side == r_side else r_ids
+        digger = _pick_defender(def_ids, pool, cfg, rng)     # 防守這一球的人
+        others = [i for i in att_ids if i != hitter] or att_ids
+        setter = _pick_defender(others, pool, cfg, rng, key="set_weight")   # 舉這一球的人
+        d = (0.4 * th[hitter] + 0.2 * th[setter] + 0.4 * S[att_side]) - 0.5 * (th[digger] + S[def_side])
         pk = _sigmoid(_logit(cfg["p_kill"]) + b * d)
         pe = _sigmoid(_logit(cfg["p_attack_error"]) - b * d)
         pb = _sigmoid(_logit(cfg["p_blocked"]) - b * d)
@@ -239,6 +257,7 @@ def simulate_rally(serving, receiving, server, S, pool, cfg, rng, stats):
         if u < pk + pe + pb:
             st["blocked"] += 1
             return def_side
+        stats[digger]["digs"] += 1                          # 球被接起來，換對方進攻
         att_ids, (att_side, def_side) = (s_ids if att_side == r_side else r_ids), (def_side, att_side)
     return att_side
 
