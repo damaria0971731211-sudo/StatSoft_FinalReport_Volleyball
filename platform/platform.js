@@ -76,7 +76,7 @@
   function initChooser() {
     const sel = $("#player-select");
     const ids = D.players.map(p => p.id);
-    sel.innerHTML = ids.map(id => {
+    sel.innerHTML = `<option value="" disabled>新球員（自建檔案）</option>` + ids.map(id => {
       const p = PLAYER[id];
       return `<option value="${id}">${id}｜自報 ${p.self} 級｜${p.sets} 局｜${p.nv} 館</option>`;
     }).join("");
@@ -120,8 +120,8 @@
       </div>`).join("");
     let gap;
     if (p.isNew) gap = `還沒打過球，估計完全來自自報與主場球館的平均，所以區間很寬。打幾局之後就會往比賽紀錄靠。`;
-    else if (d > 0) gap = `比賽紀錄顯示他比自報低 ${d} 級：只看自報，他會被排進程度太高的場次。`;
-    else if (d < 0) gap = `比賽紀錄顯示他比自報高 ${-d} 級：只看自報，他會被排進新手場，對其他人不公平。`;
+    else if (d > 0) gap = `比賽紀錄顯示你比自報低 ${d} 級：只看自報，你會被排進程度太高的場次。`;
+    else if (d < 0) gap = `比賽紀錄顯示你比自報高 ${-d} 級：只看自報，你會被排進新手場，對其他人不公平。`;
     else gap = `自報和比賽紀錄一致。`;
     if (state.truth && p.truth != null) gap += `<span class="truth-line" style="display:block">模擬真值：實力 ${f2(p.truth)}，相當於 ${levelOf(p.truth)} 級。${p.truth >= lo && p.truth <= hi ? "落在 95% 區間內。" : "落在 95% 區間外。"}</span>`;
     $("#gap-text").innerHTML = gap;
@@ -136,7 +136,7 @@
       $("#venue-table").innerHTML = `<thead><tr><th>球館</th><th class="num">晚數</th><th class="num">局數</th><th class="num">勝率</th><th class="num">得失分</th></tr></thead><tbody>` +
         p.venues.map(r => `<tr><td>${esc(VENUE[r.v].name)}${r.v === p.home ? '<span class="tag-home">主場</span>' : ""}</td><td class="num">${r.nights}</td><td class="num">${r.sets}</td><td class="num">${pct(r.wins / r.sets)}</td><td class="num">${r.pf}:${r.pa}</td></tr>`).join("") + "</tbody>";
       $("#bridge-note").textContent = p.nv >= 2
-        ? `他是「橋接球員」：在 ${p.nv} 間館都打過，讓模型能把不同球館的分級放在同一把尺上（150 人裡只有 17 位）。`
+        ? `你是「橋接球員」：在 ${p.nv} 間館都打過，讓模型能把不同球館的分級放在同一把尺上（150 人裡只有 17 位）。`
         : "只在一間球館打過。跨館比較靠其他去過多館的球員串起來。";
     }
     if (p.isNew || !p.recent.length) { $("#recent-table").innerHTML = `<tr><td class="muted">—</td></tr>`; $("#atk-note").textContent = ""; }
@@ -196,7 +196,7 @@
 
     const v = VENUE[state.venue], g = gate(p, v), box = $("#decision");
     box.className = "card decision " + g.kind;
-    const who = p.isNew ? "這位新球員" : p.id;
+    const who = "你";
     if (g.kind === "free") {
       box.innerHTML = `<div class="verdict"><div class="big">報名成功</div><div class="muted">${esc(v.name)}不設程度門檻，所有人都能報。平台仍會記錄這晚的比賽，累積到${who}的檔案裡。</div></div>
         <p class="muted small" style="margin-bottom:0">試試看右邊有門檻的兩間：進階場（限 4 級以上）和新手友善館（限 3 級以下）。</p>`;
@@ -206,15 +206,15 @@
     const headline = { pass: "放行", trial: "給試打名額", block: "擋下" }[g.kind];
     const what = g.upper ? `實力低於 ${v.level_max}|${v.level_max + 1} 級切點` : `實力達到 ${v.level_min - 1}|${v.level_min} 級切點`;
     let why;
-    if (g.kind === "pass") why = g.upper ? "比賽紀錄很確定他沒有超過這個館的程度上限。" : "比賽紀錄很確定他達到門檻，誤放的風險低。";
-    else if (g.kind === "block") why = g.upper ? "比賽紀錄很確定他的程度高於新手場上限。讓他進來，其他新手的體驗會變差。" : "比賽紀錄很確定他還沒達到門檻。放行的話，同場其他人的體驗會變差（型一錯誤）。";
+    if (g.kind === "pass") why = g.upper ? "比賽紀錄很確定你沒有超過這個館的程度上限。" : "比賽紀錄很確定你達到門檻，誤放的風險低。";
+    else if (g.kind === "block") why = g.upper ? "比賽紀錄很確定你的程度高於新手場上限。讓你進來，其他新手的體驗會變差。" : "比賽紀錄很確定你還沒達到門檻。放行的話，同場其他人的體驗會變差（型一錯誤）。";
     else why = "資料還不夠判斷。給一個試打名額（例如每隊最多一位），這晚打的局數會回到檔案裡，下次判斷更準。";
     // 還要打幾局才可能判定（假設估計值不變）
     let more = "";
     if (g.kind === "trial") {
       const zNeed = 0.8416; // Φ(0.8416) = 0.8
       const dist = Math.abs(p.theta - g.cut);
-      if (dist < 0.02) more = "他的估計值幾乎就在切點上，要打非常多局才分得出來。";
+      if (dist < 0.02) more = "你的估計值幾乎就在切點上，要打非常多局才分得出來。";
       else {
         const need = Math.ceil(((zNeed / dist) ** 2 - 1 / p.se ** 2) / M.prec_per_set);
         more = need > 0 ? `若估計值維持不變，大約再打 ${need} 局，P 就會${p.theta > g.cut === !g.upper ? "超過 0.8" : "低於 0.2"}。` : "";
@@ -231,7 +231,7 @@
         <div class="ticks"><span style="left:0%">0</span><span style="left:20%">0.2</span><span style="left:80%">0.8</span><span style="left:100%">1</span></div></div>
       <p style="margin:14px 0 0">${why} ${more}</p>
       <div class="compare-self">
-        <div><h5>平台怎麼算</h5>${who}的估計實力 ${f2(p.theta)}（95% 區間 ${f2(lo)} ~ ${f2(hi)}，${p.sets} 局），門檻切點 ${f2(g.cut)}。在常態後驗下，${what}的機率是 ${pct(g.P)}。</div>
+        <div><h5>平台怎麼算</h5>你的估計實力 ${f2(p.theta)}（95% 區間 ${f2(lo)} ~ ${f2(hi)}，${p.sets} 局），門檻切點 ${f2(g.cut)}。在常態後驗下，${what}的機率是 ${pct(g.P)}。</div>
         <div><h5>如果只看自報</h5>自報 ${p.self} 級 → <b>${selfRes}</b>。${selfAgree ? "和平台的判斷一樣。" : g.kind === "trial" ? "平台認為還說不準，改給試打名額。" : "<b>和平台的判斷不同</b>：這就是自報失準造成的誤放或誤擋。"}</div>
       </div>
       ${state.truth && p.truth != null ? `<div class="truth-line">模擬真值 ${f2(p.truth)}：${(g.upper ? p.truth < g.cut : p.truth >= g.cut) ? "真的符合門檻" : "其實不符合門檻"}。${verdictCheck(g, p)}</div>` : ""}`;
@@ -349,17 +349,38 @@
       <p class="muted small" style="margin:10px 0 0">${M.n_players} 人、${M.n_games} 局。自報每升一級，實力先驗平均加 β = ${M.beta.toFixed(2)}；個人實力的先驗標準差 σ = ${M.sigma.toFixed(2)}，球館之間 σ<sub>v</sub> = ${M.sigma_v.toFixed(2)}。涵蓋率高於 95% 是因為區間保守（包含自報先驗的不確定性）。</p>`;
   }
 
-  // ---------- 分頁列：捲動時標示目前步驟 ----------
-  function initSpy() {
-    const links = [...document.querySelectorAll(".tabs a")];
-    const secs = links.map(a => document.querySelector(a.getAttribute("href")));
-    const on = () => {
-      let k = 0; secs.forEach((s, i) => { if (s.getBoundingClientRect().top < 120) k = i; });
-      links.forEach((a, i) => { if (i === k) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
-    };
-    addEventListener("scroll", on, { passive: true }); on();
+  // ---------- 分區切換（#home / #report / #signup / #how） ----------
+  const PANELS = ["home", "report", "signup", "how"];
+  function route() {
+    let h = location.hash.slice(1);
+    if (h === "split") h = "signup";
+    if (!PANELS.includes(h)) h = "home";
+    PANELS.forEach(k => document.getElementById("p-" + k).classList.toggle("active", k === h));
+    document.querySelectorAll(".tabs a").forEach(a => {
+      if (a.getAttribute("href") === "#" + h) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+    });
+    if (location.hash.slice(1) === "split") document.getElementById("split").scrollIntoView();
+    else window.scrollTo(0, 0);
   }
 
-  function renderAll() { renderProfile(); renderSignup(); renderSplit(); }
-  initChooser(); initNights(); renderValidity(); renderAll(); initSpy();
+  // ---------- 身分列與首頁入口摘要 ----------
+  function renderPersona() {
+    const p = cur(), probs = levelProbs(p.theta, p.se);
+    const est = probs.indexOf(Math.max(...probs)) + 1, conf = Math.max(...probs);
+    const confZh = conf >= 0.7 ? "高" : conf >= 0.45 ? "中" : "低";
+    $("#avatar").textContent = p.isNew ? "新" : p.id.slice(-2);
+    $("#persona-name").textContent = p.isNew ? "新球員（剛建立檔案）" : `目前身分：${p.id}`;
+    $("#persona-sub").textContent = `主場 ${VENUE[p.home].name}｜自報 ${p.self} 級｜${p.sets} 局`;
+    if ($("#player-select").value !== p.id) $("#player-select").value = p.isNew ? "" : p.id;
+    const d = p.self - est;
+    $("#entry-report").innerHTML = `<span class="badge same">平台估計 ${est} 級</span><span class="badge ${conf >= 0.7 ? "hi" : conf >= 0.45 ? "mid" : "lo"}">可信度${confZh}</span>` +
+      (d ? `<span class="badge ${d > 0 ? "up" : "down"}">自報${d > 0 ? "高" : "低"} ${Math.abs(d)} 級</span>` : "");
+    $("#entry-signup").innerHTML = D.venues.filter(v => v.level_min != null || v.level_max != null).map(v => {
+      const g = gate(p, v); return `<span class="pill ${g.kind}">${v.name.replace(/虛構球館 . ?（(.*)）/, "$1")}：${KIND_ZH[g.kind]}</span>`;
+    }).join("");
+  }
+
+  function renderAll() { renderPersona(); renderProfile(); renderSignup(); renderSplit(); }
+  initChooser(); initNights(); renderValidity(); renderAll();
+  addEventListener("hashchange", route); route();
 })();

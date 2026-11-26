@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/style.css">
   <link rel="stylesheet" href="platform.css">
+  <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
 
@@ -28,10 +29,10 @@
 
 <nav class="tabs" aria-label="示範步驟">
   <ul>
-    <li><a href="#profile">① 個人檔案</a></li>
-    <li><a href="#signup">② 報名</a></li>
-    <li><a href="#split">③ 當晚分隊</a></li>
-    <li><a href="#how">怎麼算的</a></li>
+    <li><a href="#home">首頁</a></li>
+    <li><a href="#report">我的分析報告</a></li>
+    <li><a href="#signup">報名</a></li>
+    <li><a href="#how">方法說明</a></li>
   </ul>
 </nav>
 
@@ -42,41 +43,73 @@
     <span>球員、球館、比賽全部由 <code>volley-sim/platform</code> 產生（4 館、150 人、8 週、772 局），不是真實人物。實力估計來自 R 的跨館階層模型。</span>
   </div>
 
-  <section class="intro">
-    <p class="eyebrow">平台原型</p>
-    <h1>一份檔案走遍各家球館，報名看比賽紀錄，不只看自報</h1>
-    <p class="muted">選一位球員，看他在各館累積的紀錄、平台估出來的程度與可信度，再替他報名有門檻的球館。</p>
-  </section>
-
-  <!-- 選球員 -->
-  <div class="card chooser">
-    <div class="chooser-row">
-      <label for="player-select">球員</label>
-      <select id="player-select"></select>
-      <span class="muted small">或從推薦案例開始：</span>
+  <!-- 目前身分（所有專區共用） -->
+  <div class="persona" aria-label="目前身分">
+    <div class="persona-who">
+      <span class="avatar" id="avatar" aria-hidden="true"></span>
+      <div><div class="persona-name" id="persona-name"></div><div class="persona-sub" id="persona-sub"></div></div>
     </div>
-    <div class="chips" id="chips" role="group" aria-label="推薦案例"></div>
-    <details class="newbie" id="newbie">
-      <summary>建立新檔案（還沒打過任何一局）</summary>
-      <div class="newbie-row">
-        <label>自報程度 <select id="nb-level"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></label>
-        <label>主場球館 <select id="nb-home"></select></label>
-        <button type="button" class="btn" id="nb-go">用這份檔案示範</button>
-      </div>
-    </details>
-    <label class="truth-toggle"><input type="checkbox" id="truth-toggle"> 顯示模擬真值（真實平台看不到，只用來檢查模型）</label>
+    <div class="persona-ctrl">
+      <label for="player-select" class="sr-only">切換球員</label>
+      <select id="player-select"></select>
+      <label class="truth-toggle"><input type="checkbox" id="truth-toggle"> 顯示模擬真值</label>
+    </div>
   </div>
 
-  <!-- ① 個人檔案 -->
-  <section class="step" id="profile" aria-labelledby="h-profile">
-    <div class="step-head"><span class="step-num">1</span><div><h2 id="h-profile">跨館個人檔案</h2><p class="muted" id="profile-sub"></p></div></div>
+  <!-- 首頁 -->
+  <section class="panel" id="p-home" aria-labelledby="h-home">
+    <div class="home-hero">
+      <p class="eyebrow">平台原型</p>
+      <h1 id="h-home">一份檔案走遍各家球館，報名看比賽紀錄，不只看自報</h1>
+      <p>在任何一間合作球館打的每一局，都會累積到同一份檔案。平台用這些紀錄估出你的真實程度，報名有門檻的場次時就用它來判斷。</p>
+    </div>
+
+    <div class="entry-grid">
+      <a class="entry" href="#signup">
+        <span class="entry-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M8.5 15l2.5 2.5 4.5-5"/></svg></span>
+        <span class="entry-body"><span class="entry-title">報名</span>
+        <span class="entry-desc">選球館與場次，平台依你的比賽紀錄判斷放行、給試打名額或擋下；報名截止後看當晚分隊。</span>
+        <span class="entry-live" id="entry-signup"></span></span>
+        <span class="entry-go" aria-hidden="true">→</span>
+      </a>
+      <a class="entry" href="#report">
+        <span class="entry-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>
+        <span class="entry-body"><span class="entry-title">我的分析報告</span>
+        <span class="entry-desc">平台估計的程度與可信度、和自報差多少、各館出賽紀錄與最近比賽。</span>
+        <span class="entry-live" id="entry-report"></span></span>
+        <span class="entry-go" aria-hidden="true">→</span>
+      </a>
+    </div>
+
+    <div class="card chooser">
+      <h3 class="card-title">換個身分試試</h3>
+      <p class="muted small" style="margin:0">這是示範，你可以扮演任何一位模擬球員。推薦從這幾個案例開始：</p>
+      <div class="chips" id="chips" role="group" aria-label="推薦案例"></div>
+      <details class="newbie" id="newbie">
+        <summary>建立新檔案（還沒打過任何一局）</summary>
+        <div class="newbie-row">
+          <label>自報程度 <select id="nb-level"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></label>
+          <label>主場球館 <select id="nb-home"></select></label>
+          <button type="button" class="btn" id="nb-go">用這份檔案示範</button>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- 我的分析報告 -->
+  <section class="panel" id="p-report" aria-labelledby="h-report">
+    <div class="panel-head">
+      <p class="eyebrow">我的分析報告</p>
+      <h2 id="h-report">我的程度，用比賽紀錄說話</h2>
+      <p id="profile-sub"></p>
+    </div>
 
     <div class="grid g4 kpi-grid" id="kpis"></div>
 
     <div class="grid g2">
       <div class="card">
         <h3 class="card-title">平台估計的程度落在哪一級</h3>
-        <p class="muted small">把估計實力與 95% 區間換成 1~5 級的機率。橘框是他自己報的等級。</p>
+        <p class="muted small">把估計實力與 95% 區間換成 1~5 級的機率。橘框是你自己報的等級。</p>
         <div id="level-bars" class="level-bars"></div>
         <p class="gap-text" id="gap-text"></p>
       </div>
@@ -99,11 +132,18 @@
         <p class="muted small" id="atk-note"></p>
       </div>
     </div>
+    <p class="panel-foot"><a href="#signup">用這份報告去報名 →</a></p>
   </section>
 
-  <!-- ② 報名 -->
-  <section class="step" id="signup" aria-labelledby="h-signup">
-    <div class="step-head"><span class="step-num">2</span><div><h2 id="h-signup">選一間球館報名</h2><p class="muted">有門檻的球館，平台算「此人達到門檻的後驗機率 P」，再用三段式規則決定。</p></div></div>
+  <!-- 報名 -->
+  <section class="panel" id="p-signup" aria-labelledby="h-signup">
+    <div class="panel-head">
+      <p class="eyebrow">報名</p>
+      <h2 id="h-signup">選一間球館報名</h2>
+      <p>有程度門檻的球館，平台算出你達到門檻的機率 P，再用三段式規則決定。</p>
+    </div>
+
+    <div class="sub-steps" aria-hidden="true"><span class="on">1 選球館</span><span class="on">2 門檻判定</span><span class="on">3 當晚分隊</span></div>
 
     <div class="rule-strip">
       <span class="pill pass">P ≥ 0.8　放行</span>
@@ -115,17 +155,15 @@
     <div class="venue-grid" id="venue-cards" role="radiogroup" aria-label="球館"></div>
 
     <div class="card decision" id="decision" aria-live="polite"></div>
-  </section>
 
-  <!-- ③ 分隊 -->
-  <section class="step" id="split" aria-labelledby="h-split">
-    <div class="step-head"><span class="step-num">3</span><div><h2 id="h-split">報名截止，自動分隊</h2><p class="muted">以各館模擬資料的最後一晚名單為例，比較「自報蛇形」和「平台評分最佳化」兩種分法。</p></div></div>
+    <h3 id="split">報名截止後：當晚分隊</h3>
+    <p class="muted small" style="margin-top:-4px">以各館模擬資料的最後一晚名單為例，比較「只看自報」和「平台評分」兩種分法。</p>
 
     <div class="card chooser">
       <div class="chooser-row">
         <label for="night-select">場次</label>
         <select id="night-select"></select>
-        <label class="inline-check"><input type="checkbox" id="add-me" checked> 把目前這位球員加進名單（若已通過報名）</label>
+        <label class="inline-check"><input type="checkbox" id="add-me" checked> 把我加進名單（若已通過報名）</label>
       </div>
       <p class="muted small" id="night-info"></p>
     </div>
@@ -133,9 +171,13 @@
     <div class="grid g2" id="split-compare"></div>
   </section>
 
-  <!-- 怎麼算的 -->
-  <section class="step" id="how" aria-labelledby="h-how">
-    <div class="step-head"><span class="step-num">?</span><div><h2 id="h-how">這個頁面是怎麼算的</h2></div></div>
+  <!-- 方法說明 -->
+  <section class="panel" id="p-how" aria-labelledby="h-how">
+    <div class="panel-head">
+      <p class="eyebrow">方法說明</p>
+      <h2 id="h-how">這個示範是怎麼算的</h2>
+      <p>三個功能各自對應專題裡的一個統計方法。</p>
+    </div>
     <div class="grid g3">
       <div class="card tight">
         <h4>實力估計（R）</h4>
